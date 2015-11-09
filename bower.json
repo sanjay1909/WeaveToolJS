@@ -1,0 +1,19 @@
+{
+  "name": "WeaveToolJS",
+  "homepage": "https://github.com/sanjay1909/WeaveToolJS",
+  "authors": [
+    "Sanjay krishna anbalagan <sanjay1909@gmail.com>"
+  ],
+  "description": "Sesssioned Tools for Visualization Widgets",
+  "main": "weavetool.js",
+  "moduleType": [],
+  "keywords": [
+    "weave"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "WeaveCoreJS": "git://github.com/sanjay1909/WeaveCoreJS.git",
+    "WeaveDataJS": "https://github.com/sanjay1909/WeaveDataJS.git"
+  }
+}

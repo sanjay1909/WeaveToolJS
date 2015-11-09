@@ -1,0 +1,51 @@
+{
+  "name": "weavetool",
+  "version": "1.0.0",
+  "description": "Sessioned Tools for Visualization",
+  "main": "index.js",
+  "dependencies": {
+    "browser-sync": "^2.9.12",
+    "browserify": "^11.2.0",
+    "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.7.0",
+    "gulp-bump": "^0.3.1",
+    "gulp": "^3.9.0",
+    "gulp-json-editor": "^2.2.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-gh-pages": "^0.5.4",
+    "gulp-jshint": "^1.12.0",
+    "gulp-load-plugins": "^0.10.0",
+    "gulp-order": "^1.1.1",
+    "gulp-notify": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-util": "^3.0.7",
+    "gulp-yuidoc": "^0.1.2",
+    "karma-chrome-launcher": "^0.2.1",
+    "karma-cli": "^0.1.1",
+    "merge-stream": "^0.1.8",
+    "pretty-hrtime": "^1.0.1",
+    "lodash": "^3.10.1",
+    "require-dir": "^0.3.0",
+    "watchify": "^3.6.0",
+    "underscore": "^1.8.3",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanjay1909/WeaveToolJS.git"
+  },
+  "keywords": [
+    "weave"
+  ],
+  "author": "Sanjay Krishna Anbalagan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sanjay1909/WeaveToolJS/issues"
+  },
+  "homepage": "https://github.com/sanjay1909/WeaveToolJS#readme"
+}
