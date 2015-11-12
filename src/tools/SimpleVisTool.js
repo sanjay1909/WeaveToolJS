@@ -33,7 +33,7 @@
      * @author sanjay1909
      */
     function SimpleVisTool() {
-        weavetool.IVisTool.call(this);
+        weavetool.DraggablePanel.call(this);
 
         Object.defineProperties(this, {
             'enableTitle': {
@@ -49,7 +49,7 @@
 
     }
 
-    SimpleVisTool.prototype = new weavetool.IVisTool();
+    SimpleVisTool.prototype = new weavetool.DraggablePanel();
     SimpleVisTool.prototype.constructor = SimpleVisTool;
     var p = SimpleVisTool.prototype;
 

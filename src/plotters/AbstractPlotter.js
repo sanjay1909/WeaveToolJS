@@ -74,7 +74,7 @@
         var childCC = WeaveAPI.SessionManager.getCallbackCollection(child);
         // instead of triggering parent callbacks, trigger spatialCallbacks which will in turn trigger parent callbacks.
         childCC.removeCallback(thisCC.triggerCallbacks);
-        WeaveAPI.SessionManager.registerLinkableChild(spatialCallbacks, child);
+        WeaveAPI.SessionManager.registerLinkableChild(this.spatialCallbacks, child);
 
         return child;
     }
@@ -84,16 +84,16 @@
      * @param child An object to register as a spatial property.
      * @return The child object.
      */
-    p.registerSpatialProperty(child, callback, useGroupedCallback) {
+    p.registerSpatialProperty = function (child, callback, useGroupedCallback) {
         callback = (callback === undefined) ? null : callback;
         useGroupedCallback = (useGroupedCallback === undefined) ? false : useGroupedCallback;
-        WeaveAPI.SessionManager.rregisterLinkableChild(this, child, callback, useGroupedCallback);
+        WeaveAPI.SessionManager.registerLinkableChild(this, child, callback, useGroupedCallback);
 
-        var thisCC = WeaveAPI.SessionManager.rgetCallbackCollection(this);
-        var childCC = WeaveAPI.SessionManager.rgetCallbackCollection(child);
+        var thisCC = WeaveAPI.SessionManager.getCallbackCollection(this);
+        var childCC = WeaveAPI.SessionManager.getCallbackCollection(child);
         // instead of triggering parent callbacks, trigger spatialCallbacks which will in turn trigger parent callbacks.
         childCC.removeCallback(thisCC.triggerCallbacks);
-        WeaveAPI.SessionManager.rregisterLinkableChild(spatialCallbacks, child);
+        WeaveAPI.SessionManager.registerLinkableChild(this.spatialCallbacks, child);
 
         return child;
     }

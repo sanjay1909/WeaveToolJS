@@ -146,7 +146,7 @@
     /**
      * This function will update the fullDataBounds and zoomBounds based on the current state of the layers.
      */
-    p.updateZoom = function (now) {
+    function updateZoom(now) {
         /*now = (now === undefined) ? false : now;
         if (this._lazyUpdateZoom && !now) {
             this._shouldUpdateZoom = true;

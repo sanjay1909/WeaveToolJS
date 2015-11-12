@@ -1,0 +1,43 @@
+<html>
+
+<head>
+    <script type="application/javascript" src="http://sanjay1909.github.io/WeaveCoreJS/weavecore.js"></script>
+    <script type="application/javascript" src="http://sanjay1909.github.io/WeaveDataJS/weavedata.js"></script>
+    <script type="application/javascript" src="../weavetool.js"></script>
+</head>
+
+<body>
+    <script>
+        weave.path('defaultProbeKeySet').request('weavecore.LinkableVariable');
+        weave.path('defaultSelectionKeySet').request('weavecore.LinkableVariable');
+        weave.path('defaultSubsetKeyFilter').request('weavecore.LinkableVariable');
+
+        var dsPath = weave.path('cereal').request('weavedata.CSVDataSource');
+        var dsURLPath = weave.path(['cereal', 'url']);
+
+        var ds = WeaveAPI.globalHashMap.getObject('cereal');
+        filteredDataX = WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn());
+        filteredDataY = WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn());
+
+        getDataX = function () {
+            return filteredDataX.internalDynamicColumn;
+        }
+        getDataY = function () {
+            return filteredDataY.internalDynamicColumn;
+        }
+
+        assignXYColumnsFromSource = function () {
+            ds.putColumn(5, getDataX());
+            ds.putColumn(6, getDataY());
+        }
+
+
+        weave.path('scatterplot').requestPanel('weavetool.SimpleVisTool', 50, 0, 50, 100);
+
+        dsURLPath.addCallback(assignXYColumnsFromSource, false, true);
+        dsURLPath.state('http://as-me.github.io/dashboard/data/testCereal.csv');
+    </script>
+
+</body>
+
+</html>
