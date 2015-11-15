@@ -227,6 +227,7 @@
     weavecore.ClassUtils.registerClass('weavetool.AbstractPlotter', weavetool.AbstractPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -522,6 +523,7 @@
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -593,6 +595,7 @@
     weavecore.ClassUtils.registerClass('weavetool.SolidFillStyle', weavetool.SolidFillStyle);
 
 }());
+
 (function () {
 
     /**
@@ -687,6 +690,7 @@
     weavecore.ClassUtils.registerClass('weavetool.SolidLineStyle', weavetool.SolidLineStyle);
 
 }());
+
 (function () {
 
     /**
@@ -977,6 +981,7 @@
     weavecore.ClassUtils.registerClass('weavetool.PlotManager', weavetool.PlotManager);
 
 }());
+
 (function () {
 
     /**
@@ -1462,6 +1467,7 @@
     weavecore.ClassUtils.registerClass('weavetool.DraggablePanel', weavetool.DraggablePanel);
 
 }());
+
 (function () {
 
     /**
@@ -1531,6 +1537,7 @@
     weavecore.ClassUtils.registerClass('weavetool.SimpleVisTool', weavetool.SimpleVisTool);
 
 }());
+
 /* ***** BEGIN LICENSE BLOCK *****
  *
  * This file is part of Weave.
