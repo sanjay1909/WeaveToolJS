@@ -12,6 +12,7 @@ var buildOrder = [
     'src/plotters/AbstractGlyphPlotter.js',
     'src/plotters/ScatterplotPlotter.js',
     'src/plotters/SimpleAxisPlotter.js',
+    'src/plotters/ProbeLinePlotter.js',
 
     'src/layers/styles/SolidFillStyle.js',
     'src/layers/styles/SolidLineStyle.js',

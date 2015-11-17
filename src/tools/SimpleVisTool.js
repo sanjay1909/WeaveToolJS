@@ -43,6 +43,17 @@
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableHashMap())
             }
         });
+
+        // lock an InteractiveVisualization onto the panel
+        this._visualization = this.children.requestObject("visualization", weavetool.SimpleInteractiveVisualization, true);
+
+        // returns the interactive visualization
+        Object.defineProperty(this, 'visualization', {
+            get: function () {
+                return this._visualization
+            }
+        });
+
     }
 
     function handleTitleToggleChange() {
@@ -54,7 +65,14 @@
     var p = SimpleVisTool.prototype;
 
 
-
+    /**
+     * @param mainPlotterClass The main plotter class definition.
+     * @param showAxes Set to true if axes should be added.
+     * @return The main plotter.
+     */
+    p.initializePlotters = function (mainPlotterClass, showAxes) {
+        return this.visualization.initializePlotters(mainPlotterClass, showAxes);
+    }
 
     if (typeof exports !== 'undefined') {
         module.exports = SimpleVisTool;

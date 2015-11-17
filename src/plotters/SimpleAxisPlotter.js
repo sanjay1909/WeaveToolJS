@@ -25,6 +25,9 @@
         value: 'SimpleAxisPlotter'
     });
 
+    SimpleAxisPlotter.DEFAULT_LABEL_FUNCTION = function (number, string, column) {
+        return string;
+    };
 
     /**
      * This is an interface to identify Visualization tools
@@ -113,15 +116,29 @@
             }
 
         });
+
+        //private const
+        Object.defineProperties(this, {
+            '_titleTextFormatWatcher': {
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
+            },
+            '_labelTextFormatWatcher': {
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
+            }
+        });
+
     }
 
-    SimpleAxisPlotter.DEFAULT_LABEL_FUNCTION = "< ![CDATA[ function (number, string, column) { return string; } ]] > ";
+
 
     SimpleAxisPlotter.prototype = new weavetool.AbstractPlotter();
     SimpleAxisPlotter.prototype.constructor = SimpleAxisPlotter;
     var p = SimpleAxisPlotter.prototype;
 
-
+    p.setupTextFormats = function (titleTextFormat, labelTextFormat) {
+        this._titleTextFormatWatcher.target = titleTextFormat;
+        this._labelTextFormatWatcher.target = labelTextFormat;
+    }
 
 
     if (typeof exports !== 'undefined') {
