@@ -63,7 +63,7 @@ weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType, inde
     var pathArray = [];
     if (index > 0) {
         for (var i = 0; i <= index; i++) {
-            pathArray[i] = this._path[index]
+            pathArray[i] = this._path[i]
         }
     }
     var tool = this.weave.path(pathArray);
