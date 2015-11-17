@@ -38,7 +38,7 @@
 
         Object.defineProperties(this, {
             'enable': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(new weavecore.LinkableBoolean(true))
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableBoolean(true))
             },
             'color': {
                 value: createColumn(0x000000)

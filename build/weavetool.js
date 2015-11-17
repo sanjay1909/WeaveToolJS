@@ -564,13 +564,13 @@
 
         Object.defineProperties(this, {
             'enable': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(new weavecore.LinkableBoolean(true))
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableBoolean(true))
             },
             'color': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(new weavedata.AlwaysDefinedColumn(NaN))
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavedata.AlwaysDefinedColumn(NaN))
             },
             'alpha': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(new weavedata.AlwaysDefinedColumn(1.0))
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavedata.AlwaysDefinedColumn(1.0))
             }
         });
 
@@ -595,7 +595,6 @@
     weavecore.ClassUtils.registerClass('weavetool.SolidFillStyle', weavetool.SolidFillStyle);
 
 }());
-
 (function () {
 
     /**
@@ -636,7 +635,7 @@
 
         Object.defineProperties(this, {
             'enable': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(new weavecore.LinkableBoolean(true))
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableBoolean(true))
             },
             'color': {
                 value: createColumn(0x000000)
@@ -690,7 +689,6 @@
     weavecore.ClassUtils.registerClass('weavetool.SolidLineStyle', weavetool.SolidLineStyle);
 
 }());
-
 (function () {
 
     /**
