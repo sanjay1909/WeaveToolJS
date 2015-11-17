@@ -690,6 +690,7 @@
     weavecore.ClassUtils.registerClass('weavetool.SolidLineStyle', weavetool.SolidLineStyle);
 
 }());
+
 (function () {
 
     /**
