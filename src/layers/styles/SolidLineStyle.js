@@ -41,28 +41,28 @@
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableBoolean(true))
             },
             'color': {
-                value: createColumn(0x000000)
+                value: createColumn.call(this, 0x000000)
             },
             'weight': {
-                value: createColumn(1)
+                value: createColumn.call(this, 1)
             },
             'alpha': {
-                value: createColumn(0.5)
+                value: createColumn.call(this, 0.5)
             },
             'pixelHinting': {
-                value: createColumn(false)
+                value: createColumn.call(this, false)
             },
             'scaleMode': {
-                value: createColumn('normal')
+                value: createColumn.call(this, 'normal')
             },
             'caps': {
-                value: createColumn(null)
+                value: createColumn.call(this, null)
             },
             'joints': {
-                value: createColumn(null)
+                value: createColumn.call(this, null)
             },
             'miterLimit': {
-                value: createColumn(3)
+                value: createColumn.call(this, 3)
             }
         });
 
