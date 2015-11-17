@@ -1671,7 +1671,7 @@ weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType, inde
     index = (index === undefined) ? 0 : index;
     var pathArray = [];
     if (index > 0) {
-        for (var i = 0; i < index; i++) {
+        for (var i = 0; i <= index; i++) {
             pathArray[i] = this._path[index]
         }
     }
