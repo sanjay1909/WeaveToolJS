@@ -1669,7 +1669,13 @@ weave.WeavePath.prototype.requestPanel = function (type, x, y, width, height) {
  */
 weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType, index) {
     index = (index === undefined) ? 0 : index;
-    var tool = this.weave.path(this._path[index]);
+    var pathArray = [];
+    if (index > 0) {
+        for (var i = 0; i < index; i++) {
+            pathArray[i] = this._path[index]
+        }
+    }
+    var tool = this.weave.path(pathArray);
     if (!checkType(tool, 'weavetool.SimpleVisTool'))
         this._failMessage('pushPlotter', "Not a compatible visualization tool", this._path);
 
