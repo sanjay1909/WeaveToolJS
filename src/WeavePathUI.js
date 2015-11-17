@@ -58,7 +58,8 @@ weave.WeavePath.prototype.requestPanel = function (type, x, y, width, height) {
  * @param plotterType (Optional) The type of plotter to request if it doesn't exist yet.
  * @return A new WeavePath object which remembers the current WeavePath as its parent.
  */
-weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType) {
+weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType, index) {
+    index = (index === undefined) ? 0 : index;
     var tool = this.weave.path(this._path[0]);
     if (!checkType(tool, 'weavetool.SimpleVisTool'))
         this._failMessage('pushPlotter', "Not a compatible visualization tool", this._path);
@@ -79,8 +80,9 @@ weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType) {
  *                    If omitted, either the plotter at the current path or the default plotter ("plot") will be used.
  * @return A new WeavePath object which remembers the current WeavePath as its parent.
  */
-weave.WeavePath.prototype.pushLayerSettings = function (plotterName) {
-    var tool = this.weave.path(this._path[0]);
+weave.WeavePath.prototype.pushLayerSettings = function (plotterName, index) {
+    index = (index === undefined) ? 0 : index;
+    var tool = this.weave.path(this._path[index]);
     if (!checkType(tool, 'weavetool.SimpleVisTool'))
         this._failMessage('pushLayerSettings', "Not a compatible visualization tool", this._path);
 
