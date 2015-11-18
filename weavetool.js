@@ -931,6 +931,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
 }
 } */
+
 (function () {
 
     function Weave() {
@@ -1090,6 +1091,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     }
 
 }());
+
 (function () {
 
     /**
@@ -2751,7 +2753,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         if (showAxes) {
             // x
             var xAxis = this.plotManager.plotters.requestObject(SimpleInteractiveVisualization.X_AXIS_LAYER_NAME, weavetool.SimpleAxisPlotter, true);
-            xAxis.setupTextFormats(weave.properties.axisTitleTextFormat, weave.properties.visTextFormat);
+            xAxis.setupTextFormats(Weave.properties.axisTitleTextFormat, Weave.properties.visTextFormat);
             xAxis.axisLabelRelativeAngle.value = -45;
             xAxis.labelVerticalAlign.value = "top";
             var xSettings = this.plotManager.getLayerSettings(SimpleInteractiveVisualization.X_AXIS_LAYER_NAME);
@@ -2762,7 +2764,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
             // y
             var yAxis = this.plotManager.plotters.requestObject(SimpleInteractiveVisualization.Y_AXIS_LAYER_NAME, weavetool.SimpleAxisPlotter, true);
-            yAxis.setupTextFormats(weave.properties.axisTitleTextFormat, weave.properties.visTextFormat);
+            yAxis.setupTextFormats(Weave.properties.axisTitleTextFormat, Weave.properties.visTextFormat);
             yAxis.axisLabelRelativeAngle.value = 45;
             yAxis.labelVerticalAlign.value = "bottom";
             var ySettings = this.plotManager.getLayerSettings(SimpleInteractiveVisualization.Y_AXIS_LAYER_NAME);
@@ -2847,7 +2849,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleInteractiveVisualization', weavetool.SimpleInteractiveVisualization);
 
 }());
-
 (function () {
 
     /**
@@ -3221,6 +3222,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleVisTool', weavetool.SimpleVisTool);
 
 }());
+
 (function () {
 
     /**
