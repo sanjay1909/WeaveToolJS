@@ -1550,9 +1550,9 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
     // BEGIN TEMPORARY SOLUTION
     p.setSideAxisName = function (name, angle, xDistance, yDistance, verticalAlign, labelPosition, labelAlignment, maxLabelWidth) {
-        labelPosition = (labelPosition === undefined) ? LABEL_POSITION_AT_AXIS_CENTER : labelPosition;
+        /*labelPosition = (labelPosition === undefined) ? LABEL_POSITION_AT_AXIS_CENTER : labelPosition;
         labelAlignment = (labelAlignment === undefined) ? null : labelAlignment;
-        maxLabelWidth = (maxLabelWidth === undefined) ? -1 : maxLabelWidth;
+        maxLabelWidth = (maxLabelWidth === undefined) ? -1 : maxLabelWidth;*/
         /*_axisName = name;
         _axisNameAngle = angle;
         _axisNameXDistance = xDistance;
@@ -1576,7 +1576,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
-
 (function () {
 
     /**
@@ -1923,6 +1922,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 	return min <= xScale && xScale <= max
 		&& min <= yScale && yScale <= max;
 }*/
+
 (function () {
 
     /**
