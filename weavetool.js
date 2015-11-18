@@ -931,6 +931,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
 }
 } */
+
 (function () {
 
     /**
@@ -1139,6 +1140,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.AbstractPlotter', weavetool.AbstractPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -1254,6 +1256,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.AbstractGlyphPlotter', weavetool.AbstractGlyphPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -1390,6 +1393,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.ScatterPlotPlotter', weavetool.ScatterPlotPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -1574,6 +1578,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -1920,6 +1925,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 	return min <= xScale && xScale <= max
 		&& min <= yScale && yScale <= max;
 }*/
+
 (function () {
 
     /**
@@ -2218,6 +2224,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.PlotManager', weavetool.PlotManager);
 
 }());
+
 (function () {
 
     /**
@@ -2611,6 +2618,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleInteractiveVisualization', weavetool.SimpleInteractiveVisualization);
 
 }());
+
 (function () {
 
     /**
@@ -2864,6 +2872,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.DraggablePanel', weavetool.DraggablePanel);
 
 }());
+
 (function () {
 
     /**
@@ -2983,6 +2992,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleVisTool', weavetool.SimpleVisTool);
 
 }());
+
 (function () {
 
     /**
@@ -3219,6 +3229,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.ScatterPlotTool', weavetool.ScatterPlotTool);
 
 }());
+
 /* ***** BEGIN LICENSE BLOCK *****
  *
  * This file is part of Weave.
