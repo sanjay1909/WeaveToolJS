@@ -143,6 +143,14 @@
     PlotManager.prototype.constructor = PlotManager;
     var p = PlotManager.prototype;
 
+    p.getPlotter = function (name) {
+        return this.plotters.getObject(name);
+    }
+
+    p.getLayerSettings = function (name) {
+        return this.layerSettings.getObject(name);
+    }
+
     /**
      * This function will update the fullDataBounds and zoomBounds based on the current state of the layers.
      */

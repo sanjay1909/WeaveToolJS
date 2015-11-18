@@ -54,6 +54,38 @@
             }
         });
 
+        Object.defineProperty(this, 'mainLayerSettings', {
+            get: function () {
+                return this.visualization.getMainLayerSettings()
+            }
+        });
+
+        Object.defineProperty(this, 'mainPlotter', {
+            get: function () {
+                return this.visualization.getMainPlotter()
+            }
+        });
+        Object.defineProperty(this, 'xAxisPlotter', {
+            get: function () {
+                return this.visualization.getXAxisPlotter()
+            }
+        });
+        Object.defineProperty(this, 'yAxisPlotter', {
+            get: function () {
+                return this.visualization.getYAxisPlotter()
+            }
+        });
+
+
+
+
+        WeaveAPI.SessionManager.getCallbackCollection(weave.properties.visTitleTextFormat).addGroupedCallback(this, updateTitleLabel.bind(this), true);
+
+    }
+
+    function updateTitleLabel() {
+
+        //Weave.properties.visTitleTextFormat.copyToStyle(visTitle);
     }
 
     function handleTitleToggleChange() {

@@ -90,6 +90,9 @@
         });
 
         this._mainPlotterInitialized = false;
+
+        this.xToolTipEnabled;
+        this.yToolTipEnabled;
     }
 
     function linkToAxisProperties(axisName) {
@@ -208,6 +211,36 @@
 
         this.plotManager.plotters.setNameOrder(names);
     }
+
+    /**
+     * This function should be called by a tool to initialize a probe line layer and its ProbeLinePlotter.
+     * To disable probe lines, call this function with both parameters set to false.
+     * @param xToolTipEnabled set to true if xAxis needs a probe line and tooltip
+     * @param yToolTipEnabled set to true if yAxis needs a probe line and tooltip
+     * @param xLabelFunction optional function to convert xAxis number values to string
+     * @param yLabelFunction optional function to convert yAxis number values to string
+     */
+    p.enableProbeLine = function (xToolTipEnabled, yToolTipEnabled) {
+        if (!xToolTipEnabled && !yToolTipEnabled)
+            return;
+
+        this.xToolTipEnabled = xToolTipEnabled;
+        this.yToolTipEnabled = yToolTipEnabled;
+
+        this.plotManager.plotters.requestObject(SimpleInteractiveVisualization.PROBE_LINE_LAYER_NAME, weavetool.ProbeLinePlotter, true);
+        var probeLayerSettings = this.plotManager.getLayerSettings(SimpleInteractiveVisualization.PROBE_LINE_LAYER_NAME);
+        probeLayerSettings.selectable.value = false;
+        probeLayerSettings.selectable.lock();
+        WeaveAPI.SessionManager.getCallbackCollection(this.getMainLayerSettings().probeFilter).addImmediateCallback(this, updateProbeLines.bind(this), false);
+    }
+
+    /**
+     * Draws the probe lines using _probePlotter and the corresponding axes tooltips
+     * @param labelFunction optional function to convert number values to string
+     * @param labelFunctionX optional function to convert xAxis number values to string
+     *
+     */
+    function updateProbeLines() {}
 
     if (typeof exports !== 'undefined') {
         module.exports = SimpleInteractiveVisualization;

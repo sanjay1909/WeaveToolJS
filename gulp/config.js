@@ -5,18 +5,20 @@ var src = './src';
 //used both for Source reference and Order reference
 var buildOrder = [
 
-'src/IVisTool.js',
+    'src/IVisTool.js',
 
+    'src/WeaveProperties.js',
     'src/plotters/IPlotter.js',
     'src/plotters/AbstractPlotter.js',
     'src/plotters/AbstractGlyphPlotter.js',
-    'src/plotters/ScatterplotPlotter.js',
+    'src/plotters/ScatterPlotPlotter.js',
     'src/plotters/SimpleAxisPlotter.js',
     'src/plotters/ProbeLinePlotter.js',
 
     'src/layers/styles/SolidFillStyle.js',
     'src/layers/styles/SolidLineStyle.js',
 
+    'src/layers/LayerSettings.js',
     'src/layers/PlotManager.js',
     'src/layers/Visualization.js',
     'src/layers/InteractiveVisualization.js',

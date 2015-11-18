@@ -9,7 +9,7 @@
      * @readOnly
      * @type String
      */
-    Object.defineProperty(ScatterplotPlotter, 'NS', {
+    Object.defineProperty(ScatterPlotPlotter, 'NS', {
         value: 'weavetool'
     });
 
@@ -21,8 +21,8 @@
      * @readOnly
      * @type String
      */
-    Object.defineProperty(ScatterplotPlotter, 'CLASS_NAME', {
-        value: 'ScatterplotPlotter'
+    Object.defineProperty(ScatterPlotPlotter, 'CLASS_NAME', {
+        value: 'ScatterPlotPlotter'
     });
 
 
@@ -31,7 +31,7 @@
      * @author adufilie
      * @author sanjay1909
      */
-    function ScatterplotPlotter() {
+    function ScatterPlotPlotter() {
         weavetool.AbstractGlyphPlotter.call(this);
 
         Object.defineProperties(this, {
@@ -66,23 +66,71 @@
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableNumber(0x800000))
             }
         });
+
+        Object.defineProperty(this, '_colorDataWatcher', {
+            value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavecore.LinkableWatcher())
+        });
+
+        this._extraKeyDependencies;
+        this._keyInclusionLogic;
+
+
+
+        this.fill.color.internalDynamicColumn.globalName = "defaultColorColumn";
+        this.fill.color.internalDynamicColumn.addImmediateCallback(this, handleColor.bind(this), true);
+        WeaveAPI.SessionManager.getCallbackCollection(this._colorDataWatcher).addImmediateCallback(this, updateKeySources.bind(this), true);
     }
 
-    ScatterplotPlotter.prototype = new weavetool.AbstractGlyphPlotter();
-    ScatterplotPlotter.prototype.constructor = ScatterplotPlotter;
-    var p = ScatterplotPlotter.prototype;
+    function handleColor() {
+        var cc = (this.fill.color.getInternalColumn() && this.fill.color.getInternalColumn() instanceof weavedata.ColorColumn) ? this.fill.color.getInternalColumn() : null;
+        var bc = cc ? ((cc.getInternalColumn() && cc.getInternalColumn() instanceof weavedata.BinnedColumn) ? cc.getInternalColumn() : null) : null;
+        var fc = bc ? ((bc.getInternalColumn() && bc.getInternalColumn() instanceof weavedata.FilteredColumn) ? bc.getInternalColumn() : null) : null;
+        var dc = fc ? fc.internalDynamicColumn : null;
+        this._colorDataWatcher.target = dc || fc || bc || cc;
+    }
 
+    function updateKeySources() {
+        var columns = [this.sizeBy];
+        if (this._colorDataWatcher.target)
+            columns.push(this._colorDataWatcher.target)
+        columns.push(this.dataX, this.dataY);
+        if (this._extraKeyDependencies)
+            columns = columns.concat(this._extraKeyDependencies);
 
+        // sort size descending, all others ascending
+        var sortDirections = columns.map(function (c, i, a) {
+            return i === 0 ? -1 : 1;
+        });
+
+        this._filteredKeySet.setColumnKeySources(columns, sortDirections, null, this._keyInclusionLogic);
+    }
+
+    ScatterPlotPlotter.prototype = new weavetool.AbstractGlyphPlotter();
+    ScatterPlotPlotter.prototype.constructor = ScatterPlotPlotter;
+    var p = ScatterPlotPlotter.prototype;
+
+    p.hack_setKeyInclusionLogic = function (keyInclusionLogic, extraColumnDependencies) {
+        this._extraKeyDependencies = extraColumnDependencies;
+        this._keyInclusionLogic = keyInclusionLogic;
+        updateKeySources.call(this);
+    }
+
+    p.getSelectableAttributeNames = function () {
+        return ["X", "Y", "Color", "Size"];
+    }
+    p.getSelectableAttributes = function () {
+        return [this.dataX, this.dataY, this.fill.color, this.sizeBy];
+    }
 
 
     if (typeof exports !== 'undefined') {
-        module.exports = ScatterplotPlotter;
+        module.exports = ScatterPlotPlotter;
     } else {
 
         window.weavetool = window.weavetool ? window.weavetool : {};
-        window.weavetool.ScatterplotPlotter = ScatterplotPlotter;
+        window.weavetool.ScatterPlotPlotter = ScatterPlotPlotter;
     }
 
-    weavecore.ClassUtils.registerClass('weavetool.ScatterplotPlotter', weavetool.ScatterplotPlotter);
+    weavecore.ClassUtils.registerClass('weavetool.ScatterPlotPlotter', weavetool.ScatterPlotPlotter);
 
 }());

@@ -168,8 +168,20 @@
             },
             'axisTitleTextFormat': {
                 value: new weavecore.LinkableTextFormat()
+            },
+            'panelTitleTextFormat': {
+                value: new weavecore.LinkableTextFormat()
             }
-        })
+        });
+
+
+        Object.defineProperty(this, 'visTextFormat', {
+            get: function () {
+                return weavecore.LinkableTextFormat.defaultTextFormat;
+            }
+        });
+
+
 
 
 
@@ -181,9 +193,9 @@
             WeaveAPI.SessionManager.registerLinkableChild(this, this[propertyName]);
         }.bind(this));
 
-        visTextFormat.size.value = 11;
-        axisTitleTextFormat.size.value = 13;
-        visTitleTextFormat.size.value = 16;
+        this.visTextFormat.size.value = 11;
+        this.axisTitleTextFormat.size.value = 13;
+        this.visTitleTextFormat.size.value = 16;
 
         // handle dynamic changes to the session state that change what CSS file to use
         /*cssStyleSheetName.addGroupedCallback(
@@ -199,9 +211,9 @@
             _toggleMenuItem("KeyMappingTool", false);
             _toggleMenuItem("RDataSource", false);*/
 
-        panelTitleTextFormat.font.value = "Verdana";
-        panelTitleTextFormat.size.value = 10;
-        panelTitleTextFormat.color.value = 0xFFFFFF;
+        this.panelTitleTextFormat.font.value = "Verdana";
+        this.panelTitleTextFormat.size.value = 10;
+        this.panelTitleTextFormat.color.value = 0xFFFFFF;
 
         /* linkBindableProperty(maxComputationTimePerFrame, WeaveAPI.StageUtils, 'maxComputationTimePerFrame');
 
@@ -234,6 +246,10 @@
         return 0 <= value && value <= 1;
     }
 
+    function verifyNonNegativeNumber(value) {
+        return value >= 0;
+    }
+
 
     function verifyWindowSnapGridSize(value) {
         if (!weavedata.NumberUtils.verifyNumberOrPercentage(value))
@@ -262,6 +278,9 @@
     weavecore.ClassUtils.registerClass('weavetool.WeaveProperties', weavetool.WeaveProperties);
 
 }());
+
+weave.properties = WeaveAPI.globalHashMap.requestObject("WeaveProperties", weavetool.WeaveProperties, false);
+console.log(weave.properties);
 
 /*
 package weave {
@@ -756,9 +775,7 @@ package weave {
         private static
         const WeaveStartup: Class;
 
-        /**
-         * This function will run the JavaScript code specified in the startupScript LinkableString.
-         */
+
 public
 
 function runStartupJavaScript(): void {
@@ -856,4 +873,4 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
 
 }
-} * /
+} */

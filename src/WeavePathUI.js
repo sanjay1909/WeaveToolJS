@@ -18,7 +18,7 @@
 /*if (!weave.WeavePath)
     return;*/
 
-weave.properties = WeaveAPI.globalHashMap.requestObject("WeaveProperties", weavetool.WeaveProperties)
+
 
 var checkType = weave.evaluateExpression(null, "(o, type) => o instanceof type");
 

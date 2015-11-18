@@ -54,6 +54,24 @@
             }
         });
 
+        /**
+         * This variable is returned by get keySet().
+         */
+        Object.defineProperty(this, '_filteredKeySet', {
+            value: this.newSpatialProperty(weavedata.FilteredKeySet)
+        });
+
+        /**
+         * @return An IKeySet interface to the record keys that can be passed to the drawRecord() and getDataBoundsFromRecordKey() functions.
+         */
+        Object.defineProperty(this, 'filteredKeySet', {
+            get: function () {
+                return this._filteredKeySet;
+            }
+        });
+
+
+
 
     }
 
@@ -96,6 +114,24 @@
         WeaveAPI.SessionManager.registerLinkableChild(this.spatialCallbacks, child);
 
         return child;
+    }
+
+    /**
+     * This will set up the keySet so it provides keys in sorted order based on the values in a list of columns.
+     * @param columns An Array of IAttributeColumns to use for comparing IQualifiedKeys.
+     * @param sortDirections Array of sort directions corresponding to the columns and given as integers (1=ascending, -1=descending, 0=none).
+     * @see weave.data.KeySets.FilteredKeySet#setColumnKeySources()
+     */
+    p.setColumnKeySources = function (columns, sortDirections) {
+        this._filteredKeySet.setColumnKeySources(columns, sortDirections);
+    }
+
+    /**
+     * This function sets the base IKeySet that is being filtered.
+     * @param newBaseKeySet A new IKeySet to use as the base for this FilteredKeySet.
+     */
+    p.setSingleKeySource = function (keySet) {
+        this._filteredKeySet.setSingleKeySource(keySet);
     }
 
 

@@ -124,8 +124,13 @@
             },
             '_labelTextFormatWatcher': {
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
+            },
+            '_columnWatcher': {
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
             }
         });
+
+        this._labelFunction = null;
 
     }
 
@@ -140,6 +145,31 @@
         this._labelTextFormatWatcher.target = labelTextFormat;
     }
 
+    // TEMPORARY SOLUTION
+    p.setLabelFunction = function (func, column) {
+        this._labelFunction = func;
+        this._columnWatcher.target = column;
+        WeaveAPI.SessionManager.getCallbackCollection(this).triggerCallbacks();
+    }
+
+    // END TEMPORARY SOLUTION
+
+    // BEGIN TEMPORARY SOLUTION
+    p.setSideAxisName = function (name, angle, xDistance, yDistance, verticalAlign, labelPosition, labelAlignment, maxLabelWidth) {
+        labelPosition = (labelPosition === undefined) ? LABEL_POSITION_AT_AXIS_CENTER : labelPosition;
+        labelAlignment = (labelAlignment === undefined) ? null : labelAlignment;
+        maxLabelWidth = (maxLabelWidth === undefined) ? -1 : maxLabelWidth;
+        /*_axisName = name;
+        _axisNameAngle = angle;
+        _axisNameXDistance = xDistance;
+        _axisNameYDistance = yDistance;
+        _axisNameVerticalAlign = verticalAlign;
+        _labelPosition = labelPosition;
+        _labelAlignment = labelAlignment;
+        _maxLabelWidth = maxLabelWidth;
+
+        getCallbackCollection(this).triggerCallbacks();*/
+    }
 
     if (typeof exports !== 'undefined') {
         module.exports = SimpleAxisPlotter;

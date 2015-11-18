@@ -58,7 +58,7 @@
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableNumber(0, weavecore.StandardLib.isDefined), handleZOrderChange.bind(this), true)
             },
             'panelTitle': {
-                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableString(), handlePanelTitleChange, true)
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableString(), this.handlePanelTitleChange.bind(this), true)
             },
             'enableMoveResize': {
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableBoolean(true), panelNeedsUpdate, true)
@@ -155,17 +155,7 @@
         updatePanelZOrder();*/
     }
 
-    function handlePanelTitleChange() {
-        /*if (panelTitle.value)
-        {
-        	panelTitleFunction.value = '`' + panelTitle.value.split('`').join('\\`') + '`';
-        	// title will be automatically updated by grouped callback
-        }
-        else
-        {
-        	title = defaultPanelTitle;
-        }*/
-    }
+
 
     function panelNeedsUpdate() {
         /*if (!parent)
@@ -238,7 +228,17 @@
     var p = DraggablePanel.prototype;
 
 
-
+    p.handlePanelTitleChange = function () {
+        /*if (panelTitle.value)
+        {
+        	panelTitleFunction.value = '`' + panelTitle.value.split('`').join('\\`') + '`';
+        	// title will be automatically updated by grouped callback
+        }
+        else
+        {
+        	title = defaultPanelTitle;
+        }*/
+    }
 
     if (typeof exports !== 'undefined') {
         module.exports = DraggablePanel;

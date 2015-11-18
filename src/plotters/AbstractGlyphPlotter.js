@@ -46,6 +46,53 @@
                 value: this.newSpatialProperty(weavecore.LinkableString)
             }
         });
+
+        //protectedConst
+        Object.defineProperties(this, {
+            'filteredDataX': {
+                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+            },
+            'filteredDataY': {
+                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+            }
+        });
+
+        Object.defineProperties(this, {
+            'statsX': {
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, WeaveAPI.StatisticsCache.getColumnStatistics(this.filteredDataX))
+            },
+            'statsY': {
+                value: WeaveAPI.SessionManager.registerLinkableChild(this, WeaveAPI.StatisticsCache.getColumnStatistics(this.filteredDataY))
+            }
+        });
+
+
+        Object.defineProperty(this, 'dataX', {
+            get: function () {
+                return this.filteredDataX.internalDynamicColumn;
+            }
+        });
+        Object.defineProperty(this, 'dataY', {
+            get: function () {
+                return this.filteredDataY.internalDynamicColumn;
+            }
+        });
+
+
+        this.setColumnKeySources([this.dataX, this.dataY]);
+
+        // filter x and y columns so background data bounds will be correct
+        this.filteredDataX.filter.requestLocalObject(weavedata.FilteredKeySet, true);
+        this.filteredDataY.filter.requestLocalObject(weavedata.FilteredKeySet, true);
+
+        this.registerSpatialProperty(this.dataX);
+        this.registerSpatialProperty(this.dataY);
+
+        WeaveAPI.SessionManager.linkSessionState(this._filteredKeySet.keyFilter, this.filteredDataX.filter);
+        WeaveAPI.SessionManager.linkSessionState(this._filteredKeySet.keyFilter, this.filteredDataY.filter);
+
+
+
     }
 
     AbstractGlyphPlotter.prototype = new weavetool.AbstractPlotter();
