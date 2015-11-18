@@ -8,9 +8,6 @@
 
 <body>
     <script>
-        weave.path('defaultProbeKeySet').request('weavecore.LinkableVariable');
-        weave.path('defaultSelectionKeySet').request('weavecore.LinkableVariable');
-        weave.path('defaultSubsetKeyFilter').request('weavecore.LinkableVariable');
 
         var dsPath = weave.path('cereal').request('weavedata.CSVDataSource');
         var dsURLPath = weave.path(['cereal', 'url']);

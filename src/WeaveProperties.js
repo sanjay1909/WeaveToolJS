@@ -279,8 +279,8 @@
 
 }());
 
-weave.properties = WeaveAPI.globalHashMap.requestObject("WeaveProperties", weavetool.WeaveProperties, false);
-console.log(weave.properties);
+//weave.properties = WeaveAPI.globalHashMap.requestObject("WeaveProperties", weavetool.WeaveProperties, false);
+//console.log(weave.properties);
 
 /*
 package weave {

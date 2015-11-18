@@ -79,7 +79,7 @@
 
 
 
-        WeaveAPI.SessionManager.getCallbackCollection(weave.properties.visTitleTextFormat).addGroupedCallback(this, updateTitleLabel.bind(this), true);
+        WeaveAPI.SessionManager.getCallbackCollection(Weave.properties.visTitleTextFormat).addGroupedCallback(this, updateTitleLabel.bind(this), true);
 
     }
 

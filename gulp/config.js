@@ -6,8 +6,8 @@ var src = './src';
 var buildOrder = [
 
     'src/IVisTool.js',
-
     'src/WeaveProperties.js',
+    'src/Weave.js',
     'src/plotters/IPlotter.js',
     'src/plotters/AbstractPlotter.js',
     'src/plotters/AbstractGlyphPlotter.js',
