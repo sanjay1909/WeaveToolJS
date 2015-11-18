@@ -1421,9 +1421,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         value: 'SimpleAxisPlotter'
     });
 
-    SimpleAxisPlotter.DEFAULT_LABEL_FUNCTION = function (number, string, column) {
-        return string;
-    };
+    SimpleAxisPlotter.DEFAULT_LABEL_FUNCTION = "function (number, string, column) {return string;};";
 
     /**
      * This is an interface to identify Visualization tools
@@ -1578,7 +1576,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
-
 (function () {
 
     /**
