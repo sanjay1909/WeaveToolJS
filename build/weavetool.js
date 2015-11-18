@@ -2112,7 +2112,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
         var newName = this.plotters.childListCallbacks.lastNameAdded;
         if (newName) {
-            var newPlotter = plotters.childListCallbacks.lastObjectAdded;
+            var newPlotter = this.plotters.childListCallbacks.lastObjectAdded;
             var settings = this.layerSettings.requestObject(newName, weavetool.LayerSettings, this.plotters.objectIsLocked(newName));
 
             // TEMPORARY SOLUTION until we start using VisToolGroup
