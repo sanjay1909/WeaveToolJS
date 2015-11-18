@@ -26,7 +26,7 @@ var buildOrder = [
 
     'src/ui/DraggablePanel.js',
     'src/tools/SimpleVisTool.js',
-    'src/tools/ScatterplotTool.js',
+    'src/tools/ScatterPlotTool.js',
     'src/WeavePathUI.js'
 
 
