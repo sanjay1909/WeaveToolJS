@@ -1868,7 +1868,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
             'selectionFilter': {
                 value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.DynamicKeyFilter())
             },
-            'alpha': {
+            'probeFilter': {
                 value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.DynamicKeyFilter())
             }
         });
@@ -1923,7 +1923,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 	return min <= xScale && xScale <= max
 		&& min <= yScale && yScale <= max;
 }*/
-
 (function () {
 
     /**
@@ -2295,6 +2294,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.PlotManager', weavetool.PlotManager);
 
 }());
+
 (function () {
 
     /**

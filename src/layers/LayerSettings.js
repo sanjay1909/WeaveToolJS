@@ -61,7 +61,7 @@
             'selectionFilter': {
                 value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.DynamicKeyFilter())
             },
-            'alpha': {
+            'probeFilter': {
                 value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.DynamicKeyFilter())
             }
         });
