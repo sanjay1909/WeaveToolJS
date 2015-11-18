@@ -137,6 +137,20 @@
         this._name_to_SpatialIndex = {}; // name -> SpatialIndex
         this._shouldUpdateZoom = false;
         this._lazyUpdateZoom = true;
+
+
+        this.plotters.addImmediateCallback(this, updateZoom);
+        this.layerSettings.addImmediateCallback(this, updateZoom);
+        this.layerSettings.addImmediateCallback(this, refreshLayers);
+        WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).addImmediateCallback(this, refreshLayers);
+
+        this.plotters.childListCallbacks.addImmediateCallback(this, handlePlottersList.bind(this));
+        this.layerSettings.childListCallbacks.addImmediateCallback(this, handleSettingsList.bind(this));
+
+        WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginBottomNumber);
+        WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginTopNumber);
+        WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginLeftNumber);
+        WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginRightNumber);
     }
 
     PlotManager.prototype = new weavecore.ILinkableObject();
@@ -151,6 +165,65 @@
         return this.layerSettings.getObject(name);
     }
 
+    function handleSettingsList() {
+        // when settings are removed, remove plotter
+        var oldName = this.layerSettings.childListCallbacks.lastNameRemoved;
+        this.plotters.removeObject(oldName);
+        this.plotters.setNameOrder(this.layerSettings.getNames());
+    }
+
+    function handlePlottersList() {
+        this.plotters.delayCallbacks();
+        this.layerSettings.delayCallbacks();
+
+        // when plotter is removed, remove settings
+        var oldName = this.plotters.childListCallbacks.lastNameRemoved;
+        if (oldName) {
+            delete this._name_to_SpatialIndex[oldName];
+            delete this._name_to_PlotTask_Array[oldName];
+            this.layerSettings.removeObject(oldName);
+        }
+
+        var newName = this.plotters.childListCallbacks.lastNameAdded;
+        if (newName) {
+            var newPlotter = plotters.childListCallbacks.lastObjectAdded;
+            var settings = this.layerSettings.requestObject(newName, weavetool.LayerSettings, this.plotters.objectIsLocked(newName));
+
+            // TEMPORARY SOLUTION until we start using VisToolGroup
+            /*newPlotter.filteredKeySet.keyFilter.targetPath = ["defaultSubsetKeyFilter"];
+//				copySessionState(settings.subsetFilter, newPlotter.filteredKeySet.keyFilter);
+
+				var spatialIndex:SpatialIndex = _name_to_SpatialIndex[newName] = newDisposableChild(newPlotter, SpatialIndex);
+				var tasks:Array = _name_to_PlotTask_Array[newName] = [];
+				for each (var taskType:int in [PlotTask.TASK_TYPE_SUBSET, PlotTask.TASK_TYPE_SELECTION, PlotTask.TASK_TYPE_PROBE])
+				{
+					var plotTask:PlotTask = new PlotTask(taskType, newPlotter, spatialIndex, zoomBounds, settings);
+					registerDisposableChild(newPlotter, plotTask); // plotter is owner of task
+					registerLinkableChild(this, plotTask); // task affects busy status of PlotManager
+					tasks.push(plotTask);
+					// set initial size
+					plotTask.setBitmapDataSize(_unscaledWidth, _unscaledHeight);
+
+					// when the plot task triggers callbacks, we need to render the layered visualization
+					getCallbackCollection(plotTask).addImmediateCallback(this, refreshLayers);
+				}
+				setupBitmapFilters(newPlotter, settings, tasks[0], tasks[1], tasks[2]);
+				// when spatial index is recreated, we need to update zoom
+				getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom);
+
+				if (newPlotter is ITextPlotter)
+					settings.hack_useTextBitmapFilters = true;*/
+        }
+
+        this.layerSettings.setNameOrder(this.plotters.getNames());
+
+        this.plotters.resumeCallbacks();
+        this.layerSettings.resumeCallbacks();
+    }
+
+    function refreshLayers() {
+
+    }
     /**
      * This function will update the fullDataBounds and zoomBounds based on the current state of the layers.
      */
