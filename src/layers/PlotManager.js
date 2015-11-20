@@ -190,29 +190,27 @@
             var settings = this.layerSettings.requestObject(newName, weavetool.LayerSettings, this.plotters.objectIsLocked(newName));
 
             // TEMPORARY SOLUTION until we start using VisToolGroup
-            /*newPlotter.filteredKeySet.keyFilter.targetPath = ["defaultSubsetKeyFilter"];
-//				copySessionState(settings.subsetFilter, newPlotter.filteredKeySet.keyFilter);
+            newPlotter.filteredKeySet.keyFilter.targetPath = ["defaultSubsetKeyFilter"];
 
-				var spatialIndex:SpatialIndex = _name_to_SpatialIndex[newName] = newDisposableChild(newPlotter, SpatialIndex);
-				var tasks:Array = _name_to_PlotTask_Array[newName] = [];
-				for each (var taskType:int in [PlotTask.TASK_TYPE_SUBSET, PlotTask.TASK_TYPE_SELECTION, PlotTask.TASK_TYPE_PROBE])
-				{
-					var plotTask:PlotTask = new PlotTask(taskType, newPlotter, spatialIndex, zoomBounds, settings);
-					registerDisposableChild(newPlotter, plotTask); // plotter is owner of task
-					registerLinkableChild(this, plotTask); // task affects busy status of PlotManager
-					tasks.push(plotTask);
-					// set initial size
-					plotTask.setBitmapDataSize(_unscaledWidth, _unscaledHeight);
+            var spatialIndex = this._name_to_SpatialIndex[newName] = WeaveAPI.SessionManager.registerDisposableChild(newPlotter, weavetool.SpatialIndex());
+            var tasks = this._name_to_PlotTask_Array[newName] = [];
+				[PlotTask.TASK_TYPE_SUBSET, PlotTask.TASK_TYPE_SELECTION, PlotTask.TASK_TYPE_PROBE].forEach(function (taskType) {
+                var plotTask = new weavetool.PlotTask(taskType, newPlotter, spatialIndex, this.zoomBounds, settings);
+                WeaveAPI.SessionManager.registerDisposableChild(newPlotter, plotTask); // plotter is owner of task
+                WeaveAPI.SessionManager.registerLinkableChild(this, plotTask); // task affects busy status of PlotManager
+                tasks.push(plotTask);
+                // set initial size
+                //plotTask.setBitmapDataSize(_unscaledWidth, _unscaledHeight);
 
-					// when the plot task triggers callbacks, we need to render the layered visualization
-					getCallbackCollection(plotTask).addImmediateCallback(this, refreshLayers);
-				}
-				setupBitmapFilters(newPlotter, settings, tasks[0], tasks[1], tasks[2]);
-				// when spatial index is recreated, we need to update zoom
-				getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom);
+                // when the plot task triggers callbacks, we need to render the layered visualization
+                WeaveAPI.SessionManager.getCallbackCollection(plotTask).addImmediateCallback(this, refreshLayers);
+            });
+            //setupBitmapFilters(newPlotter, settings, tasks[0], tasks[1], tasks[2]);
+            // when spatial index is recreated, we need to update zoom
+            WeaveAPI.SessionManager.getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom);
 
-				if (newPlotter is ITextPlotter)
-					settings.hack_useTextBitmapFilters = true;*/
+            /*if (newPlotter is ITextPlotter)
+            	settings.hack_useTextBitmapFilters = true;*/
         }
 
         this.layerSettings.setNameOrder(this.plotters.getNames());

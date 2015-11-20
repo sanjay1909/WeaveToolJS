@@ -18,6 +18,8 @@ var buildOrder = [
     'src/layers/styles/SolidFillStyle.js',
     'src/layers/styles/SolidLineStyle.js',
 
+    'src/utils/SpatialIndex.js',
+    'src/layers/PlotTask.js',
     'src/layers/LayerSettings.js',
     'src/layers/PlotManager.js',
     'src/layers/Visualization.js',

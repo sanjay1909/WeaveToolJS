@@ -223,6 +223,10 @@
         return weavedata.ColumnUtils.deriveStringFromNumber(this.plotter.dataY, value);
     }
 
+    p.initSelectableAttributes = function (input) {
+        weavedata.ColumnUtils.initSelectableAttributes([this.plotter.dataX, this.plotter.dataY, this.plotter.fill.color], input);
+    }
+
     if (typeof exports !== 'undefined') {
         module.exports = ScatterPlotTool;
     } else {
