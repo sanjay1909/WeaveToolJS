@@ -50,10 +50,10 @@
         //protectedConst
         Object.defineProperties(this, {
             'filteredDataX': {
-                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+                value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn())
             },
             'filteredDataY': {
-                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+                value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn())
             }
         });
 
@@ -99,7 +99,23 @@
     AbstractGlyphPlotter.prototype.constructor = AbstractGlyphPlotter;
     var p = AbstractGlyphPlotter.prototype;
 
-
+    /**
+     * This function returns a Bounds2D object set to the data bounds associated with the background.
+     * @param output A Bounds2D object to store the result in.
+     */
+    p.getBackgroundDataBounds = function (output) {
+        // use filtered data so data bounds will not include points that have been filtered out.
+        if (this.zoomToSubset.value) {
+            output.reset();
+        } else {
+            output.setBounds(
+                this.statsX.getMin(),
+                this.statsY.getMin(),
+                this.statsX.getMax(),
+                this.statsY.getMax()
+            );
+        }
+    }
 
 
     if (typeof exports !== 'undefined') {

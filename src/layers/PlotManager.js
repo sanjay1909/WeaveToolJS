@@ -138,11 +138,21 @@
         this._shouldUpdateZoom = false;
         this._lazyUpdateZoom = true;
 
+        /**
+         * This can be set to a function that will be called to adjust fullDataBounds whenever it is updated.
+         */
+        this.hack_adjustFullDataBounds = null;
 
-        this.plotters.addImmediateCallback(this, updateZoom);
-        this.layerSettings.addImmediateCallback(this, updateZoom);
-        this.layerSettings.addImmediateCallback(this, refreshLayers);
-        WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).addImmediateCallback(this, refreshLayers);
+        /**
+         * This can be set to a function that will be called whenever updateZoom is called.
+         */
+        this.hack_updateZoom_callbacks = [];
+
+
+        //this.plotters.addImmediateCallback(this, updateZoom.bind(this));
+        //this.layerSettings.addImmediateCallback(this, updateZoom.bind(this));
+        //this.layerSettings.addImmediateCallback(this, refreshLayers);
+        //WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).addImmediateCallback(this, refreshLayers);
 
         this.plotters.childListCallbacks.addImmediateCallback(this, handlePlottersList.bind(this));
         this.layerSettings.childListCallbacks.addImmediateCallback(this, handleSettingsList.bind(this));
@@ -151,6 +161,9 @@
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginTopNumber);
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginLeftNumber);
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginRightNumber);
+
+        this._frameCountSinceResize = 0;
+        // WeaveAPI.StageUtils.addEventCallback("tick", this, handleFrameConstructed.bind(this));
     }
 
     PlotManager.prototype = new weavecore.ILinkableObject();
@@ -164,6 +177,36 @@
     p.getLayerSettings = function (name) {
         return this.layerSettings.getObject(name);
     }
+
+    p.hack_onUpdateZoom = function (callback) {
+        this.hack_updateZoom_callbacks.push(callback);
+    }
+
+    function handleFrameConstructed() {
+
+        if (++this._frameCountSinceResize === 2) {
+            console.log("handleFrameConstructed", this._frameCountSinceResize);
+            this.plotters.getNames(weavetool.IPlotter).forEach(function (name) {
+                this._name_to_PlotTask_Array[name].forEach(function (plotTask) {
+                    plotTask.delayAsyncTask = false;
+                });
+            }, this);
+        }
+
+        if (this._shouldUpdateZoom) {
+            console.log("handleFrameConstructed: _shouldUpdateZoom", this._shouldUpdateZoom);
+            updateZoom.call(this, true);
+        }
+
+
+        if (this.shouldRender) {
+            console.log("handleFrameConstructed: shouldRender", this.shouldRender);
+            refreshLayers(true);
+        }
+
+    }
+
+
 
     function handleSettingsList() {
         // when settings are removed, remove plotter
@@ -192,9 +235,10 @@
             // TEMPORARY SOLUTION until we start using VisToolGroup
             newPlotter.filteredKeySet.keyFilter.targetPath = ["defaultSubsetKeyFilter"];
 
-            var spatialIndex = this._name_to_SpatialIndex[newName] = WeaveAPI.SessionManager.registerDisposableChild(newPlotter, weavetool.SpatialIndex());
+            var spatialIndex = this._name_to_SpatialIndex[newName] = WeaveAPI.SessionManager.registerDisposableChild(newPlotter, new weavetool.SpatialIndex());
             var tasks = this._name_to_PlotTask_Array[newName] = [];
-				[PlotTask.TASK_TYPE_SUBSET, PlotTask.TASK_TYPE_SELECTION, PlotTask.TASK_TYPE_PROBE].forEach(function (taskType) {
+
+            [weavetool.PlotTask.TASK_TYPE_SUBSET, weavetool.PlotTask.TASK_TYPE_SELECTION, weavetool.PlotTask.TASK_TYPE_PROBE].forEach(function (taskType) {
                 var plotTask = new weavetool.PlotTask(taskType, newPlotter, spatialIndex, this.zoomBounds, settings);
                 WeaveAPI.SessionManager.registerDisposableChild(newPlotter, plotTask); // plotter is owner of task
                 WeaveAPI.SessionManager.registerLinkableChild(this, plotTask); // task affects busy status of PlotManager
@@ -204,10 +248,10 @@
 
                 // when the plot task triggers callbacks, we need to render the layered visualization
                 WeaveAPI.SessionManager.getCallbackCollection(plotTask).addImmediateCallback(this, refreshLayers);
-            });
+            }, this);
             //setupBitmapFilters(newPlotter, settings, tasks[0], tasks[1], tasks[2]);
             // when spatial index is recreated, we need to update zoom
-            WeaveAPI.SessionManager.getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom);
+            //WeaveAPI.SessionManager.getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom.bind(this));
 
             /*if (newPlotter is ITextPlotter)
             	settings.hack_useTextBitmapFilters = true;*/
@@ -226,26 +270,26 @@
      * This function will update the fullDataBounds and zoomBounds based on the current state of the layers.
      */
     function updateZoom(now) {
-        /*now = (now === undefined) ? false : now;
-        if (this._lazyUpdateZoom && !now) {
+        now = (now === undefined) ? false : now;
+        /*if (this._lazyUpdateZoom && !now) {
             this._shouldUpdateZoom = true;
             return;
-        }
+        }*/
         this._lazyUpdateZoom = false;
         this._shouldUpdateZoom = false;
 
-        // make sure callbacks only trigger once
+        /*// make sure callbacks only trigger once
         WeaveAPI.SessionManager.getCallbackCollection(this).delayCallbacks();
         WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).delayCallbacks();
         //trace('begin updateZoom',ObjectUtil.toString(getSessionState(zoomBounds)));
 
         // make sure numeric margin values are correct
-        this.marginBottomNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginBottom.value, this._unscaledHeight));
-        this.marginTopNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginTop.value, this._unscaledHeight));
-        this.marginLeftNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginLeft.value, this._unscaledWidth));
-        this.marginRightNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginRight.value, this._unscaledWidth));
+        this.marginBottomNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginBottom.value, this._unscaledHeight));
+        this.marginTopNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginTop.value, this._unscaledHeight));
+        this.marginLeftNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginLeft.value, this._unscaledWidth));
+        this.marginRightNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginRight.value, this._unscaledWidth));
 
-        updateFullDataBounds();
+        this.updateFullDataBounds();
 
         // calculate new screen bounds in temp variable
         // default behaviour is to set screenBounds beginning from lower-left corner and ending at upper-right corner
@@ -255,7 +299,7 @@
         var bottom = this._unscaledHeight - this.marginBottomNumber.value;
         // set screenBounds beginning from lower-left corner and ending at upper-right corner
         //TODO: is other behavior required?
-        tempScreenBounds.setBounds(left, bottom, right, top);
+        this.tempScreenBounds.setBounds(left, bottom, right, top);
         if (left > right)
             this.tempScreenBounds.setWidth(0);
         if (top > bottom)
@@ -302,11 +346,13 @@
 
         // save new bounds
         this.zoomBounds.setBounds(this.tempDataBounds, this.tempScreenBounds, this.enableFixedAspectRatio.value);
-        if (this.enableAutoZoomToSelection.value)
-            zoomToSelection();
+        if (this.enableAutoZoomToSelection.value) {
+            //zoomToSelection();
+        }
+
 
         // ----------------- hack --------------------
-        hack_updateZoom_callbacks.forEach(function (callback) {
+        this.hack_updateZoom_callbacks.forEach(function (callback) {
             callback();
         });
         // -------------------------------------------
@@ -321,7 +367,7 @@
      * This function gets called by updateZoom and updates fullDataBounds.
      */
     p.updateFullDataBounds = function () {
-        /*this.tempBounds.copyFrom(this.fullDataBounds);
+        this.tempBounds.copyFrom(this.fullDataBounds);
         this.fullDataBounds.reset();
         var plotterNames = this.plotters.getNames(weavetool.IPlotter)
         for (var i = 0; i < plotterNames.length; i++) {
@@ -336,22 +382,98 @@
             if (!settings.visible.value)
                 continue;
 
-            var spatialIndex = _name_to_SpatialIndex[name];
-            fullDataBounds.includeBounds(spatialIndex.collectiveBounds);
+            var spatialIndex = this._name_to_SpatialIndex[name];
+            this.fullDataBounds.includeBounds(spatialIndex.collectiveBounds);
 
             var plotter = this.plotters.getObject(name);
-            plotter.getBackgroundDataBounds(tempDataBounds);
-            fullDataBounds.includeBounds(tempDataBounds);
+            plotter.getBackgroundDataBounds(this.tempDataBounds);
+            this.fullDataBounds.includeBounds(this.tempDataBounds);
         }
         // ----------------- hack --------------------
-        if (hack_adjustFullDataBounds != null)
-            hack_adjustFullDataBounds();
+        if (this.hack_adjustFullDataBounds !== null)
+            this.hack_adjustFullDataBounds();
         // -------------------------------------------
 
         if (!this.tempBounds.equals(this.fullDataBounds)) {
             //trace('fullDataBounds changed',ObjectUtil.toString(fullDataBounds));
             WeaveAPI.SessionManager.getCallbackCollection(this).triggerCallbacks();
-        }*/
+        }
+    }
+
+    /**
+     * This function sets the data bounds for zooming, but checks them against the min and max zoom first.
+     * @param bounds The bounds that zoomBounds should be set to.
+     * @see weave.primitives.ZoomBounds#setDataBounds()
+     */
+    p.setCheckedZoomDataBounds = function (dataBounds) {
+        // instead of calling zoomBounds.setDataBounds() directly, we use setZoomLevel() because it's easier to constrain between min and max zoom.
+
+        this.zoomBounds.getScreenBounds(this.tempScreenBounds);
+        var minSize = Math.min(this.minScreenSize.value, this.tempScreenBounds.getXCoverage(), this.tempScreenBounds.getYCoverage());
+        var newZoomLevel = weavecore.StandardLib.roundSignificant(
+            weavecore.StandardLib.constrain(
+                weavetool.ZoomUtils.getZoomLevel(dataBounds, this.tempScreenBounds, this.fullDataBounds, minSize),
+                this.minZoomLevel.value,
+                this.maxZoomLevel.value
+            )
+        );
+
+        // stop if constrained zoom level doesn't change
+        if (this.getZoomLevel() === newZoomLevel)
+            return;
+
+        var cc = WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds);
+        cc.delayCallbacks();
+
+        this.setZoomLevel(newZoomLevel);
+        this.zoomBounds.getDataBounds(this.tempDataBounds);
+        if (this.tempDataBounds.isUndefined())
+            this.tempDataBounds.copyFrom(dataBounds);
+        else
+            this.tempDataBounds.setCenter(dataBounds.getXCenter(), dataBounds.getYCenter());
+        this.zoomBounds.setDataBounds(this.tempDataBounds);
+
+        // ----------------- hack --------------------
+        this.hack_updateZoom_callbacks.forEach(function (callback) {
+            callback();
+        });
+        // -------------------------------------------
+
+        cc.resumeCallbacks();
+    }
+
+
+    /**
+     * This function gets the current zoom level as defined in ZoomUtils.
+     * @return The current zoom level.
+     * @see weave.utils.ZoomUtils#getZoomLevel
+     */
+    p.getZoomLevel = function () {
+        this.zoomBounds.getDataBounds(this.tempDataBounds);
+        this.zoomBounds.getScreenBounds(this.tempScreenBounds);
+        var minSize = Math.min(this.minScreenSize.value, this.tempScreenBounds.getXCoverage(), this.tempScreenBounds.getYCoverage());
+        var zoomLevel = weavetool.ZoomUtils.getZoomLevel(this.tempDataBounds, this.tempScreenBounds, this.fullDataBounds, minSize);
+        return zoomLevel;
+    }
+
+    /**
+     * This function sets the zoom level as defined in ZoomUtils.
+     * @param newZoomLevel The new zoom level.
+     * @see weave.utils.ZoomUtils#getZoomLevel
+     */
+    p.setZoomLevel = function (newZoomLevel) {
+        newZoomLevel = weavecore.StandardLib.roundSignificant(newZoomLevel);
+        var currentZoomLevel = this.getZoomLevel();
+        var newConstrainedZoomLevel = weavecore.StandardLib.constrain(newZoomLevel, this.minZoomLevel.value, this.maxZoomLevel.value);
+        if (newConstrainedZoomLevel !== currentZoomLevel) {
+            var scale = 1 / Math.pow(2, newConstrainedZoomLevel - currentZoomLevel);
+            if (!isNaN(scale) && scale !== 0) {
+                this.zoomBounds.getDataBounds(this.tempDataBounds);
+                this.tempDataBounds.setWidth(this.tempDataBounds.getWidth() * scale);
+                this.tempDataBounds.setHeight(this.tempDataBounds.getHeight() * scale);
+                this.zoomBounds.setDataBounds(this.tempDataBounds);
+            }
+        }
     }
 
 

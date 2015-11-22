@@ -1103,6 +1103,345 @@ function verifyNonNegativeNumber(value: Number): Boolean {
      * @readOnly
      * @type String
      */
+    Object.defineProperty(SpatialIndex, 'NS', {
+        value: 'weavetool'
+    });
+
+    /**
+     * TO-DO:temporary solution to save the CLASS_NAME constructor.name works for window object , but modular based won't work
+     * @static
+     * @public
+     * @property CLASS_NAME
+     * @readOnly
+     * @type String
+     */
+    Object.defineProperty(SpatialIndex, 'CLASS_NAME', {
+        value: 'SpatialIndex'
+    });
+
+
+    Object.defineProperty(SpatialIndex, 'debug', {
+        value: false
+    });
+
+
+    /**
+     * A class implementing SpatialIndex defines the properties required to display shapes corresponding to record keys.
+     * The interface includes basic functions for drawing and getting bounding boxes.
+     * This interface is meant to be as lightweight and generic as possible.
+     *
+     * @author adufilie
+     * @author sanjay1909
+     */
+    function SpatialIndex() {
+        weavecore.ILinkableObject.call(this);
+        this.callbacks = WeaveAPI.SessionManager.getCallbackCollection(this);
+        this._plotter;
+        this._queryMissingBounds;
+        this._restarted;
+        this._keysIndex;
+        this._keysArray = [];
+        this._restarted = false;
+        this._boundsArrayIndex; // used by async code
+        this._boundsArray; // used by async code
+
+        this._keyToBoundsMap = new Map();
+
+
+        /**
+         * This bounds represents the full extent of the shape index.
+         */
+        Object.defineProperty(this, 'collectiveBounds', {
+            get: function () {
+                return new weavedata.Bounds2D();
+            }
+        });
+        /**
+         * The list of all the IQualifiedKey objects (record identifiers) referenced in this index.
+         */
+        Object.defineProperty(this, 'keys', {
+            get: function () {
+                return this._keysArray;
+            }
+        });
+
+        Object.defineProperty(this, '_iterateAll', {
+            value: weavecore.StageUtils.generateCompoundIterativeTask(_iterate0.bind(this), _iterate1.bind(this), _iterate2.bind(this))
+        });
+
+
+
+
+
+    }
+
+    function getTimer() {
+        return new Date().getTime();
+    }
+
+    function _iterate0() {
+        this._restarted = false;
+
+        var key;
+        var bounds;
+        var i;
+
+        /*if (_plotter is IPlotterWithGeometries)
+        	_keyToGeometriesMap = new Dictionary();
+        else
+        	_keyToGeometriesMap = null;*/
+
+        this._keysArray.length = 0; // hack to prevent callbacks
+        this.clear();
+
+        // make a copy of the keys vector
+        if (this._plotter)
+            weavedata.VectorUtils.copy(this._plotter.filteredKeySet.keys, this._keysArray);
+
+        // randomize the order of the shapes to avoid a possibly poorly-performing
+        // KDTree structure due to the given ordering of the records
+        //VectorUtils.randomSort(_keysArray);
+        if (SpatialIndex.debug)
+            console.log(this._plotter, this, 'keys', this._keysArray.length);
+
+        return 1;
+    }
+
+
+    function _iterate1(stopTime) {
+        for (; this._keysIndex < this._keysArray.length; this._keysIndex++) {
+            if (this._restarted)
+                return 0;
+            if (getTimer() > stopTime)
+                return this._keysIndex / this._keysArray.length;
+
+            var key = this._keysArray[_keysIndex];
+            var boundsArray = this._keyToBoundsMap.get(key);
+            boundsArray = (boundsArray && boundsArray.constructor === Array) ? boundsArray : null;
+            if (!boundsArray) {
+                boundsArray = []
+                this._keyToBoundsMap.set(key, boundsArray)
+            }
+
+            // this may trigger callbacks, which would cause us to skip the new key
+            // at index 0 if we did not have _iterate0 as part of the async task
+            this._plotter.getDataBoundsFromRecordKey(key, boundsArray);
+
+            /*if (_keyToGeometriesMap != null)
+            {
+            	var geoms:Array = (_plotter as IPlotterWithGeometries).getGeometriesFromRecordKey(key);
+            	_keyToGeometriesMap[key] = geoms;
+            }*/
+        }
+
+        return this._restarted ? 0 : 1;
+    }
+
+    function _iterate2(stopTime) {
+        for (; this._keysArrayIndex < this._keysArray.length; this._keysArrayIndex++) {
+            var key = this._keysArray[this._keysArrayIndex];
+            if (!_boundsArray) // is there an existing nested array?
+            {
+                //trace(key.keyType,key.localName,'(',_keysArrayIndex,'/',_keysArray.length,')');
+                // begin outer loop iteration
+                this._boundsArray = this._keyToBoundsMap.get(key);
+
+                if (!this._boundsArray)
+                    continue;
+
+                this._boundsArrayIndex = 0;
+            }
+            for (; this._boundsArrayIndex < this._boundsArray.length; this._boundsArrayIndex++) // iterate on nested array
+            {
+                if (this._restarted)
+                    return 0;
+                if (getTimer() > stopTime)
+                    return this._keysArrayIndex / this._keysArray.length;
+
+                //trace('bounds(',_boundsArrayIndex,'/',_boundsArray.length,')');
+                var bounds = this._boundsArray[this._boundsArrayIndex];
+                // do not index shapes with undefined bounds
+                //TODO: index shapes with missing bounds values into a different index
+                // TEMPORARY SOLUTION: store missing bounds if queryMissingBounds == true
+                /*if (!bounds.isUndefined() || _queryMissingBounds)
+                	_kdTree.insert([bounds.getXNumericMin(), bounds.getYNumericMin(), bounds.getXNumericMax(), bounds.getYNumericMax(), bounds.getArea()], key);*/
+                // always include bounds because it may have some coords defined while others aren't
+                //collectiveBounds.includeBounds(bounds);
+            }
+            // all done with nested array
+            this._boundsArray = null;
+        }
+
+        return this._restarted ? 0 : 1;
+    }
+
+    SpatialIndex.prototype = new weavecore.ILinkableObject();
+    SpatialIndex.prototype.constructor = SpatialIndex;
+    var p = SpatialIndex.prototype;
+
+
+    /**
+     * This function gets a list of Bounds2D objects associated with a key.
+     * @param key A record key.
+     * @result An Array of Bounds2D objects associated with the key, or null if there are none.
+     */
+    p.getBoundsFromKey = function (key) {
+            return this._keyToBoundsMap.get(key);
+        }
+        /**
+         * This function fills the spatial index with the data bounds of each record in a plotter.
+         *
+         * @param plotter An IPlotter object to index.
+         */
+    p.createIndex = function (plotter, queryMissingBounds) {
+        if (SpatialIndex.debug)
+            console.log(plotter, this, 'createIndex');
+
+        this._plotter = plotter;
+        this._queryMissingBounds = queryMissingBounds;
+        this._restarted = true;
+
+        this._iterateAll.call(this, -1); // restart from first task
+        // normal priority because some things can be done without having a fully populated spatial index (?)
+        WeaveAPI.StageUtils.startTask(this, this._iterateAll.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, this.callbacks.triggerCallbacks.bind(this.callbacks), weavecore.StandardLib.replace("Creating spatial index for {0}", WeaveAPI.debugID(plotter)));
+    }
+
+
+    /**
+     * This function empties the spatial index.
+     */
+    p.clear = function () {
+        this.callbacks.delayCallbacks();
+        if (SpatialIndex.debug)
+            console.log(this._plotter, this, 'clear');
+
+        if (this._keysArray.length > 0)
+            this.callbacks.triggerCallbacks();
+
+        this._boundsArray = null;
+        this._keysArrayIndex = 0;
+        this._keysIndex = 0;
+        this._keysArray.length = 0;
+        //_kdTree.clear();
+        //collectiveBounds.reset();
+
+        this.callbacks.resumeCallbacks();
+    }
+
+
+    if (typeof exports !== 'undefined') {
+        module.exports = SpatialIndex;
+    } else {
+
+        window.weavetool = window.weavetool ? window.weavetool : {};
+        window.weavetool.SpatialIndex = SpatialIndex;
+    }
+
+    weavecore.ClassUtils.registerClass('weavetool.SpatialIndex', weavetool.SpatialIndex);
+
+}());
+(function () {
+
+    /**
+     * temporary solution to save the namespace for this class/prototype
+     * @static
+     * @public
+     * @property NS
+     * @default weavecore
+     * @readOnly
+     * @type String
+     */
+    Object.defineProperty(ZoomUtils, 'NS', {
+        value: 'weavetool'
+    });
+
+    /**
+     * TO-DO:temporary solution to save the CLASS_NAME constructor.name works for window object , but modular based won't work
+     * @static
+     * @public
+     * @property CLASS_NAME
+     * @readOnly
+     * @type String
+     */
+    Object.defineProperty(ZoomUtils, 'CLASS_NAME', {
+        value: 'ZoomUtils'
+    });
+
+    ZoomUtils.tempPanBounds = new weavedata.Bounds2D(); // reusable temporary object used only by panDataBoundsByScreenCoordinates
+    ZoomUtils.tempBounds = new weavedata.Bounds2D(); // reusable temporary object
+
+
+
+
+    /**
+     * @author adufilie
+     * @author sanjay1909
+     */
+    function ZoomUtils() {
+
+
+
+    }
+
+
+
+    //ZoomUtils.prototype = new weavecore.ILinkableObject();
+    // ZoomUtils.prototype.constructor = ZoomUtils;
+    var p = ZoomUtils.prototype;
+
+    /**
+     * This function calculates the zoom level.  If dataBounds is scaled to fit into screenBounds,
+     * the screen size of fullDataBounds would be 2^zoomLevel * minSize.  Zoom level is defined this way
+     * to be compatible with the zoom level used by Google Maps and other tiled WMS services.
+     * @param dataBounds The visible data coordinates.
+     * @param screenBounds The visible screen coordinates.
+     * @param fullDataBounds The full extent in data coordinates.
+     * @param minScreenSize The minimum size that the fullDataBounds can appear as on the screen (the screen size of zoom level zero).
+     * @return The zoom level, where the screen size of the full extent is 2^zoomLevel * minSize.
+     */
+    ZoomUtils.getZoomLevel = function (dataBounds, screenBounds, fullDataBounds, minScreenSize) {
+        ZoomUtils.tempBounds.copyFrom(fullDataBounds);
+
+        // project fullDataBounds to screen coordinates
+        dataBounds.projectCoordsTo(ZoomUtils.tempBounds, screenBounds);
+
+        // get screen size of fullDataBounds
+        var screenSize;
+        //If this is true, X coordinates will be used to calculate zoom level.  If this is false, Y coordinates will be used.
+        var useXCoordinates = (fullDataBounds.getXCoverage() > fullDataBounds.getYCoverage()); // fit full extent inside min screen size
+        if (useXCoordinates)
+            screenSize = ZoomUtils.tempBounds.getWidth();
+        else
+            screenSize = ZoomUtils.tempBounds.getHeight();
+
+        // calculate zoom level
+        return Math.log(Math.abs(screenSize / minScreenSize)) / Math.LN2;
+    }
+
+
+
+    if (typeof exports !== 'undefined') {
+        module.exports = ZoomUtils;
+    } else {
+
+        window.weavetool = window.weavetool ? window.weavetool : {};
+        window.weavetool.ZoomUtils = ZoomUtils;
+    }
+
+    weavecore.ClassUtils.registerClass('weavetool.ZoomUtils', weavetool.ZoomUtils);
+
+}());
+(function () {
+
+    /**
+     * temporary solution to save the namespace for this class/prototype
+     * @static
+     * @public
+     * @property NS
+     * @default weavecore
+     * @readOnly
+     * @type String
+     */
     Object.defineProperty(IPlotter, 'NS', {
         value: 'weavetool'
     });
@@ -1353,10 +1692,10 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         //protectedConst
         Object.defineProperties(this, {
             'filteredDataX': {
-                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+                value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn())
             },
             'filteredDataY': {
-                value: WeaveAPI.SessionManager.registerDisposableChild(this,new weavedata.FilteredColumn())
+                value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn())
             }
         });
 
@@ -1402,7 +1741,23 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     AbstractGlyphPlotter.prototype.constructor = AbstractGlyphPlotter;
     var p = AbstractGlyphPlotter.prototype;
 
-
+    /**
+     * This function returns a Bounds2D object set to the data bounds associated with the background.
+     * @param output A Bounds2D object to store the result in.
+     */
+    p.getBackgroundDataBounds = function (output) {
+        // use filtered data so data bounds will not include points that have been filtered out.
+        if (this.zoomToSubset.value) {
+            output.reset();
+        } else {
+            output.setBounds(
+                this.statsX.getMin(),
+                this.statsY.getMin(),
+                this.statsX.getMax(),
+                this.statsY.getMax()
+            );
+        }
+    }
 
 
     if (typeof exports !== 'undefined') {
@@ -1416,7 +1771,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.AbstractGlyphPlotter', weavetool.AbstractGlyphPlotter);
 
 }());
-
 (function () {
 
     /**
@@ -1681,10 +2035,18 @@ function verifyNonNegativeNumber(value: Number): Boolean {
             },
             '_columnWatcher': {
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
+            },
+            '_keySet': {
+                value: this.newSpatialProperty(weavedata.KeySet)
             }
+
+
+
         });
 
         this._labelFunction = null;
+
+        this.setSingleKeySource(this._keySet);
 
     }
 
@@ -1736,7 +2098,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
-
 (function () {
 
     /**
@@ -1798,6 +2159,442 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
 }());
 
+(function () {
+
+    /**
+     * temporary solution to save the namespace for this class/prototype
+     * @static
+     * @public
+     * @property NS
+     * @default weavecore
+     * @readOnly
+     * @type String
+     */
+    Object.defineProperty(PlotTask, 'NS', {
+        value: 'weavetool'
+    });
+
+    /**
+     * TO-DO:temporary solution to save the CLASS_NAME constructor.name works for window object , but modular based won't work
+     * @static
+     * @public
+     * @property CLASS_NAME
+     * @readOnly
+     * @type String
+     */
+    Object.defineProperty(PlotTask, 'CLASS_NAME', {
+        value: 'PlotTask'
+    });
+
+    Object.defineProperty(PlotTask, 'debug', {
+        value: false
+    });
+
+    Object.defineProperty(PlotTask, 'TASK_TYPE_SUBSET', {
+        value: 0
+    });
+    Object.defineProperty(PlotTask, 'TASK_TYPE_SELECTION', {
+        value: 1
+    });
+    Object.defineProperty(PlotTask, 'TASK_TYPE_PROBE', {
+        value: 2
+    });
+
+
+
+
+    /**
+     * A class implementing PlotTask defines the properties required to display shapes corresponding to record keys.
+     * The interface includes basic functions for drawing and getting bounding boxes.
+     * This interface is meant to be as lightweight and generic as possible.
+     *
+     * @author adufilie
+     * @author sanjay1909
+     */
+    function PlotTask(taskType, plotter, spatialIndex, zoomBounds, layerSettings) {
+        weavecore.ILinkableObject.call(this);
+        this._taskType = taskType;
+        this._plotter = plotter;
+        this._spatialIndex = spatialIndex;
+        this._zoomBounds = zoomBounds;
+        this._layerSettings = layerSettings;
+
+        this._delayInit = false;
+        this._pendingInit = false;
+        this._iteration = 0;
+        this._iterationStopTime;
+        this._keyFilter;
+        this._recordKeys;
+        this._asyncState = {};
+        this._pendingKeys;
+        this._iPendingKey;
+        this._progress = 0;
+        this._prevBusyGroupTriggerCounter = 0;
+
+        /**
+         * When this is set to true, the async task will be paused.
+         */
+        this.delayAsyncTask = false;
+
+        Object.defineProperty(this, '_dependencies', {
+            value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavecore.CallbackCollection())
+        });
+
+        Object.defineProperty(this, '_asyncSort', {
+            value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavecore.AsyncSort())
+        });
+
+        Object.defineProperty(this, 'taskType', {
+            get: function () {
+                return this._taskType;
+            }
+        });
+
+        Object.defineProperty(this, 'progress', {
+            get: function () {
+                return this._progress;
+            }
+        });
+
+
+
+
+
+        /**
+         * These are the IQualifiedKey objects identifying which records should be rendered
+         */
+        Object.defineProperty(this, 'recordKeys', {
+            get: function () {
+                return this._recordKeys;
+            }
+        });
+
+
+        /**
+         * This counter is incremented after each iteration.  When the task parameters change, this counter is reset to zero.
+         */
+        Object.defineProperty(this, 'iteration', {
+            get: function () {
+                return this._iteration;
+            }
+        });
+
+
+        /**
+         * This is the time at which the current iteration should be stopped.  Compare this value with getTimer().
+         */
+        Object.defineProperty(this, 'iterationStopTime', {
+            get: function () {
+                return this._iterationStopTime;
+            }
+        });
+
+
+        /**
+         * This object can be used to optionally store additional state variables for resuming an asynchronous task where it previously left off.
+         * Setting this will not reset the iteration counter.
+         */
+        Object.defineProperty(this, 'asyncState', {
+            get: function () {
+                return this._asyncState;
+            },
+            set: function (value) {
+                return this._asyncState = value;
+            }
+        });
+
+
+
+
+        // TEMPORARY SOLUTION until we start using VisToolGroup
+        var subsetFilter = this._plotter.filteredKeySet.keyFilter;
+
+        var keyFilters = [subsetFilter, this._layerSettings.selectionFilter, this._layerSettings.probeFilter];
+        var keyFilter = keyFilters[this._taskType];
+
+        // _dependencies is used as the parent so we can check its busy status with a single function call.
+        var list = [this._plotter, this._spatialIndex, this._layerSettings, keyFilter];
+        list.forEach(function (dependency) {
+            WeaveAPI.SessionManager.registerLinkableChild(this._dependencies, dependency);
+        }, this);
+
+
+        this._dependencies.addImmediateCallback(this, asyncStart.bind(this), true);
+
+        //linkBindableProperty(_layerSettings.visible, completedBitmap, 'visible');
+    }
+
+    function asyncStart() {
+        if (asyncInit.call(this)) {
+            if (PlotTask.debug)
+                trace(this, 'begin async rendering');
+            // normal priority because rendering is not often a prerequisite for other tasks
+            WeaveAPI.StageUtils.startTask(this, asyncIterate.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, asyncComplete.bind(this), weavecore.StandardLib.replace("Plotting {0} for {1}", ['subset', 'selection', 'mouseover'][this._taskType], WeaveAPI.debugID(this._plotter)));
+
+            // assign secondary busy task in case async task gets cancelled due to busy dependencies
+            WeaveAPI.SessionManager.assignBusyTask(this._dependencies, this);
+        } else {
+            if (PlotTask.debug)
+                trace(this, 'should not be rendered');
+        }
+    }
+
+    /**
+     * This returns true if the layer should be rendered and selectable/probeable
+     * @return true if the layer should be rendered and selectable/probeable
+     */
+    function shouldBeRendered() {
+        var visible = true;
+        if (!this._layerSettings.visible.value) {
+            if (PlotTask.debug)
+                console.log(this, 'visible=false');
+            visible = false;
+        } else if (!this._layerSettings.selectable.value && this._taskType != PlotTask.TASK_TYPE_SUBSET && !this._layerSettings.alwaysRenderSelection.value) {
+            if (PlotTask.debug)
+                console.log(this, 'selection disabled');
+            visible = false;
+        } else {
+            // HACK - begin validating spatial index if necessary, because this may affect zoomBounds
+            if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
+                this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);
+
+            // if scale is undefined, request geometry detail because this may affect zoomBounds
+            /* if (isNaN(_zoomBounds.getXScale()))
+             	hack_requestGeometryDetail();*/
+
+
+            // visible = this._layerSettings.isZoomBoundsWithinVisibleScale(this._zoomBounds);
+            /*if (!WeaveAPI.detectLinkableObjectChange(shouldBeRendered, this._plotter.dataX)) {
+                visible = false;
+            }*/
+        }
+
+        if (!visible && WeaveAPI.SessionManager.linkableObjectIsBusy(this)) {
+
+            WeaveAPI.SessionManager.unassignBusyTask(this._dependencies);
+
+            /*disposeObject(bufferBitmap.bitmapData);
+            bufferBitmap.bitmapData = null;
+            disposeObject(completedBitmap.bitmapData);
+            completedBitmap.bitmapData = null;
+            completedDataBounds.reset();
+            completedScreenBounds.reset();*/
+        }
+        return visible;
+    }
+
+    /**
+     * @return true if shouldBeRendered() returns true.
+     */
+    function asyncInit() {
+        var shouldRender = shouldBeRendered.call(this);
+        if (this._delayInit) {
+            this._pendingInit = true;
+            return shouldRender;
+        }
+        this._pendingInit = false;
+
+        this._progress = 0;
+        this._iteration = 0;
+        this._iPendingKey = 0;
+        if (shouldRender) {
+            this._pendingKeys = this._plotter.filteredKeySet.keys;
+            this._recordKeys = [];
+            /*_zoomBounds.getDataBounds(_dataBounds);
+            _zoomBounds.getScreenBounds(_screenBounds);*/
+            if (this._taskType === PlotTask.TASK_TYPE_SUBSET) {
+                // TEMPORARY SOLUTION until we start using VisToolGroup
+                this._keyFilter = this._plotter.filteredKeySet.keyFilter.getInternalKeyFilter();
+                //_keyFilter = _layerSettings.subsetFilter.getInternalKeyFilter();
+            } else if (this._taskType === PlotTask.TASK_TYPE_SELECTION)
+                this._keyFilter = this._layerSettings.selectionFilter.getInternalKeyFilter();
+            else if (this._taskType === PlotTask.TASK_TYPE_PROBE)
+                this._keyFilter = this._layerSettings.probeFilter.getInternalKeyFilter();
+
+            if (PlotTask.debug)
+                console.log(this, 'clear');
+            // clear bitmap and resize if necessary
+            //PlotterUtils.setBitmapDataSize(bufferBitmap, _unscaledWidth, _unscaledHeight);
+        } else {
+            // clear graphics if not already cleared
+            /* PlotterUtils.emptyBitmapData(bufferBitmap);
+             PlotterUtils.emptyBitmapData(completedBitmap);
+             completedDataBounds.reset();
+             completedScreenBounds.reset();*/
+            _pendingKeys = null;
+            _recordKeys = null;
+        }
+        return shouldRender;
+    }
+
+    function getTimer() {
+        return new Date().getTime();
+    }
+
+    function asyncIterate(stopTime) {
+        /* if (debugMouseDownPause && WeaveAPI.StageUtils.mouseButtonDown)
+             return 0;*/
+
+        if (this.delayAsyncTask)
+            return 0;
+
+        // if plotter is busy, stop immediately
+        if (WeaveAPI.SessionManager.linkableObjectIsBusy(this._dependencies)) {
+            if (PlotTask.debug)
+                console.log(this, 'dependencies are busy');
+            /* if (!debugIgnoreSpatialIndex)
+                 return 1;*/
+
+            // only spend half the time rendering when dependencies are busy
+            stopTime = (getTimer() + stopTime) / 2;
+        }
+
+        /***** initialize *****/
+
+        // restart if necessary, initializing variables
+        if (this._prevBusyGroupTriggerCounter !== this._dependencies.triggerCounter) {
+            this._prevBusyGroupTriggerCounter = this._dependencies.triggerCounter;
+
+            // stop immediately if we shouldn't be rendering
+            if (!asyncInit.call(this))
+                return 1;
+
+            // stop immediately if the bitmap is invalid
+            /*if (PlotterUtils.bitmapDataIsEmpty(bufferBitmap)) {
+                if (debug)
+                    trace(this, 'bitmap is empty');
+                return 1;
+            }*/
+
+            // hacks
+            //TO-DO enable this after geometry concept is implemented
+            //hack_requestGeometryDetail();
+
+            // hack - draw background on subset layer
+            /*if (this._taskType === PlotTask.TASK_TYPE_SUBSET)
+                _plotter.drawBackground(_dataBounds, _screenBounds, bufferBitmap.bitmapData);*/
+        }
+
+        /***** prepare keys *****/
+
+        // if keys aren't ready yet, prepare keys
+        if (this._pendingKeys) {
+            for (; this._iPendingKey < this._pendingKeys.length; this._iPendingKey++) {
+                // avoid doing too little or too much work per iteration
+                if (getTimer() > stopTime)
+                    return 0; // not done yet
+
+                // next key iteration - add key if included in filter and on screen
+                var key = this._pendingKeys[this._iPendingKey];
+                if (!this._keyFilter || this._keyFilter.containsKey(key)) // accept all keys if _keyFilter is null
+                {
+                    var keysArray = this._spatialIndex.getBoundsFromKey(key)
+                    for (var i = 0; i < keysArray.length; i++) {
+                        var keyBounds = keysArray[i];
+                        if (keyBounds.overlaps(this._dataBounds)) {
+                            if (!keyBounds.isUndefined() || this._layerSettings.hack_includeMissingRecordBounds) {
+                                this._recordKeys.push(key);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            }
+            if (PlotTask.debug)
+                console.log(this, 'recordKeys', this._recordKeys.length);
+
+            // done with keys
+            this._pendingKeys = null;
+        }
+
+        /***** draw *****/
+
+        // next draw iteration
+        this._iterationStopTime = stopTime;
+
+        while (this._progress < 1 && getTimer() < stopTime) {
+            // delay asyncInit() while calling plotter function in case it triggers callbacks
+            //this._delayInit = true;
+
+
+            if (this._iteration < this.recordKeys.length) {
+                this._progress = this.iteration / task.recordKeys.length;
+            } else {
+                this._progress = 1;
+            }
+
+            /*if (PlotTask.debug)
+                console.log(this, 'before iteration', this._iteration, 'recordKeys', this.recordKeys.length);
+            this._progress = this._plotter.drawPlotAsyncIteration(this);
+            if (PlotTask.debug)
+                console.log(this, 'after iteration', this._iteration, 'progress', this._progress, 'recordKeys', this.recordKeys.length);*/
+
+            //this._delayInit = false;
+            console.log(this, 'after iteration', this._iteration, 'progress', this._progress, 'recordKeys', this.recordKeys.length);
+            if (this._pendingInit) {
+                // if we get here it means the plotter draw function triggered callbacks
+                // and we need to restart the async task.
+                if (asyncInit.call(this))
+                    return asyncIterate.call(this, stopTime);
+                else
+                    return 1;
+            } else
+                this._iteration++; // prepare for next iteration
+        }
+
+        return this._progress;
+    }
+
+    function asyncComplete() {
+        if (PlotTask.debug)
+            console.log(this, 'rendering completed');
+        this._progress = 0;
+        // don't do anything else if dependencies are busy
+        if (WeaveAPI.SessionManager.linkableObjectIsBusy(this._dependencies))
+            return;
+
+        // busy task gets unassigned when the render completed successfully
+        WeaveAPI.SessionManager.unassignBusyTask(this._dependencies);
+
+        if (shouldBeRendered.call(this)) {
+            // BitmapData has been completely rendered, so update completedBitmap and completedDataBounds
+            /*var oldBitmapData: BitmapData = completedBitmap.bitmapData;
+            completedBitmap.bitmapData = bufferBitmap.bitmapData;
+            bufferBitmap.bitmapData = oldBitmapData;
+            PlotterUtils.clearBitmapData(bufferBitmap);
+            completedDataBounds.copyFrom(_dataBounds);
+            completedScreenBounds.copyFrom(_screenBounds);*/
+
+            WeaveAPI.SessionManager.getCallbackCollection(this).triggerCallbacks();
+        }
+    }
+
+    PlotTask.prototype = new weavecore.ILinkableObject();
+    PlotTask.prototype.constructor = PlotTask;
+    var p = PlotTask.prototype;
+
+    p.dispose = function () {
+        _plotter = null;
+        _spatialIndex = null;
+        _zoomBounds = null;
+        _layerSettings = null;
+        //WeaveAPI.SessionManager.disposeObject(completedBitmap.bitmapData);
+        //WeaveAPI.SessionManager.disposeObject(bufferBitmap.bitmapData);
+    }
+
+
+    if (typeof exports !== 'undefined') {
+        module.exports = PlotTask;
+    } else {
+
+        window.weavetool = window.weavetool ? window.weavetool : {};
+        window.weavetool.PlotTask = PlotTask;
+    }
+
+    weavecore.ClassUtils.registerClass('weavetool.PlotTask', weavetool.PlotTask);
+
+}());
 (function () {
 
     /**
@@ -1976,243 +2773,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
      * @readOnly
      * @type String
      */
-    Object.defineProperty(SpatialIndex, 'NS', {
-        value: 'weavetool'
-    });
-
-    /**
-     * TO-DO:temporary solution to save the CLASS_NAME constructor.name works for window object , but modular based won't work
-     * @static
-     * @public
-     * @property CLASS_NAME
-     * @readOnly
-     * @type String
-     */
-    Object.defineProperty(SpatialIndex, 'CLASS_NAME', {
-        value: 'SpatialIndex'
-    });
-
-
-    Object.defineProperty(SpatialIndex, 'debug', {
-        value: 'false'
-    });
-
-
-    /**
-     * A class implementing SpatialIndex defines the properties required to display shapes corresponding to record keys.
-     * The interface includes basic functions for drawing and getting bounding boxes.
-     * This interface is meant to be as lightweight and generic as possible.
-     *
-     * @author adufilie
-     * @author sanjay1909
-     */
-    function SpatialIndex() {
-        weavecore.ILinkableObject.call(this);
-        this.callbacks = WeaveAPI.SessionManager.getCallbackCollection(this);
-        this._plotter;
-        this._queryMissingBounds;
-        this._restarted;
-        this._keysIndex;
-        this._keysArray = [];
-        this._restarted = false;
-        this._boundsArrayIndex; // used by async code
-        this._boundsArray; // used by async code
-
-        this._keyToBoundsMap = new Map();
-
-        Object.defineProperty(this, '_iterateAll', {
-            value: WeaveAPI.StageUtils.generateCompoundIterativeTask(_iterate0.bind(this), _iterate1.bind(this), _iterate2.bind(this))
-        });
-
-        /**
-         * The list of all the IQualifiedKey objects (record identifiers) referenced in this index.
-         */
-        Object.defineProperty(this, 'keys', {
-            get: function () {
-                return this._keysArray;
-            }
-        });
-
-
-
-    }
-
-    function getTimer() {
-        return new Date().getTime();
-    }
-
-    function _iterate0() {
-        this._restarted = false;
-
-        var key;
-        var bounds;
-        var i;
-
-        /*if (_plotter is IPlotterWithGeometries)
-        	_keyToGeometriesMap = new Dictionary();
-        else
-        	_keyToGeometriesMap = null;*/
-
-        this._keysArray.length = 0; // hack to prevent callbacks
-        this.clear();
-
-        // make a copy of the keys vector
-        if (this._plotter)
-            weavecore.VectorUtils.copy(this._plotter.filteredKeySet.keys, this._keysArray);
-
-        // randomize the order of the shapes to avoid a possibly poorly-performing
-        // KDTree structure due to the given ordering of the records
-        //VectorUtils.randomSort(_keysArray);
-        if (SpatialIndex.debug)
-            console.log(this._plotter, this, 'keys', this._keysArray.length);
-
-        return 1;
-    }
-
-
-    function _iterate1(stopTime) {
-        for (; this._keysIndex < this._keysArray.length; this._keysIndex++) {
-            if (this._restarted)
-                return 0;
-            if (getTimer() > stopTime)
-                return this._keysIndex / this._keysArray.length;
-
-            var key = this._keysArray[_keysIndex];
-            var boundsArray = this._keyToBoundsMap.get(key);
-            boundsArray = (boundsArray && boundsArray.constructor === Array) ? boundsArray : null;
-            if (!boundsArray) {
-                boundsArray = []
-                this._keyToBoundsMap.set(key, boundsArray)
-            }
-
-            // this may trigger callbacks, which would cause us to skip the new key
-            // at index 0 if we did not have _iterate0 as part of the async task
-            this._plotter.getDataBoundsFromRecordKey(key, boundsArray);
-
-            /*if (_keyToGeometriesMap != null)
-            {
-            	var geoms:Array = (_plotter as IPlotterWithGeometries).getGeometriesFromRecordKey(key);
-            	_keyToGeometriesMap[key] = geoms;
-            }*/
-        }
-
-        return this._restarted ? 0 : 1;
-    }
-
-    function _iterate2(stopTime) {
-        for (; this._keysArrayIndex < this._keysArray.length; this._keysArrayIndex++) {
-            var key = this._keysArray[this._keysArrayIndex];
-            if (!_boundsArray) // is there an existing nested array?
-            {
-                //trace(key.keyType,key.localName,'(',_keysArrayIndex,'/',_keysArray.length,')');
-                // begin outer loop iteration
-                this._boundsArray = this._keyToBoundsMap.get(key);
-
-                if (!this._boundsArray)
-                    continue;
-
-                this._boundsArrayIndex = 0;
-            }
-            for (; this._boundsArrayIndex < this._boundsArray.length; this._boundsArrayIndex++) // iterate on nested array
-            {
-                if (this._restarted)
-                    return 0;
-                if (getTimer() > stopTime)
-                    return this._keysArrayIndex / this._keysArray.length;
-
-                //trace('bounds(',_boundsArrayIndex,'/',_boundsArray.length,')');
-                var bounds = this._boundsArray[this._boundsArrayIndex];
-                // do not index shapes with undefined bounds
-                //TODO: index shapes with missing bounds values into a different index
-                // TEMPORARY SOLUTION: store missing bounds if queryMissingBounds == true
-                /*if (!bounds.isUndefined() || _queryMissingBounds)
-                	_kdTree.insert([bounds.getXNumericMin(), bounds.getYNumericMin(), bounds.getXNumericMax(), bounds.getYNumericMax(), bounds.getArea()], key);*/
-                // always include bounds because it may have some coords defined while others aren't
-                //collectiveBounds.includeBounds(bounds);
-            }
-            // all done with nested array
-            this._boundsArray = null;
-        }
-
-        return this._restarted ? 0 : 1;
-    }
-
-    SpatialIndex.prototype = new weavecore.ILinkableObject();
-    SpatialIndex.prototype.constructor = SpatialIndex;
-    var p = SpatialIndex.prototype;
-
-
-    /**
-     * This function gets a list of Bounds2D objects associated with a key.
-     * @param key A record key.
-     * @result An Array of Bounds2D objects associated with the key, or null if there are none.
-     */
-    p.getBoundsFromKey = function (key) {
-            return this._keyToBoundsMap.get(key);
-        }
-        /**
-         * This function fills the spatial index with the data bounds of each record in a plotter.
-         *
-         * @param plotter An IPlotter object to index.
-         */
-    p.createIndex = function (plotter, queryMissingBounds) {
-        if (SpatialIndex.debug)
-            console.log(plotter, this, 'createIndex');
-
-        this._plotter = plotter;
-        this._queryMissingBounds = queryMissingBounds;
-        this._restarted = true;
-
-        _iterateAll.call(this, -1); // restart from first task
-        // normal priority because some things can be done without having a fully populated spatial index (?)
-        WeaveAPI.StageUtils.startTask(this, _iterateAll.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, this.callbacks.triggerCallbacks, weavecore.StandardLib.replace("Creating spatial index for {0}", WeaveAPI.debugId(plotter)));
-    }
-
-
-    /**
-     * This function empties the spatial index.
-     */
-    p.clear = function () {
-        this.callbacks.delayCallbacks();
-        if (SpatialIndex.debug)
-            console.log(this._plotter, this, 'clear');
-
-        if (this._keysArray.length > 0)
-            this.callbacks.triggerCallbacks();
-
-        this._boundsArray = null;
-        this._keysArrayIndex = 0;
-        this._keysIndex = 0;
-        this._keysArray.length = 0;
-        //_kdTree.clear();
-        //collectiveBounds.reset();
-
-        this.callbacks.resumeCallbacks();
-    }
-
-
-    if (typeof exports !== 'undefined') {
-        module.exports = SpatialIndex;
-    } else {
-
-        window.weavetool = window.weavetool ? window.weavetool : {};
-        window.weavetool.SpatialIndex = SpatialIndex;
-    }
-
-    weavecore.ClassUtils.registerClass('weavetool.SpatialIndex', weavetool.SpatialIndex);
-
-}());
-(function () {
-
-    /**
-     * temporary solution to save the namespace for this class/prototype
-     * @static
-     * @public
-     * @property NS
-     * @default weavecore
-     * @readOnly
-     * @type String
-     */
     Object.defineProperty(LayerSettings, 'NS', {
         value: 'weavetool'
     });
@@ -2292,7 +2852,13 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     var p = LayerSettings.prototype;
 
 
-
+    p.isZoomBoundsWithinVisibleScale = function (zoomBounds) {
+        var min = weavecore.StandardLib.roundSignificant(this.minVisibleScale.value);
+        var max = weavecore.StandardLib.roundSignificant(this.maxVisibleScale.value);
+        var xScale = weavecore.StandardLib.roundSignificant(zoomBounds.getXScale());
+        var yScale = weavecore.StandardLib.roundSignificant(zoomBounds.getYScale());
+        return min <= xScale && xScale <= max && min <= yScale && yScale <= max;
+    }
 
     if (typeof exports !== 'undefined') {
         module.exports = LayerSettings;
@@ -2320,7 +2886,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 	return min <= xScale && xScale <= max
 		&& min <= yScale && yScale <= max;
 }*/
-
 (function () {
 
     /**
@@ -2461,11 +3026,21 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         this._shouldUpdateZoom = false;
         this._lazyUpdateZoom = true;
 
+        /**
+         * This can be set to a function that will be called to adjust fullDataBounds whenever it is updated.
+         */
+        this.hack_adjustFullDataBounds = null;
 
-        this.plotters.addImmediateCallback(this, updateZoom);
-        this.layerSettings.addImmediateCallback(this, updateZoom);
-        this.layerSettings.addImmediateCallback(this, refreshLayers);
-        WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).addImmediateCallback(this, refreshLayers);
+        /**
+         * This can be set to a function that will be called whenever updateZoom is called.
+         */
+        this.hack_updateZoom_callbacks = [];
+
+
+        //this.plotters.addImmediateCallback(this, updateZoom.bind(this));
+        //this.layerSettings.addImmediateCallback(this, updateZoom.bind(this));
+        //this.layerSettings.addImmediateCallback(this, refreshLayers);
+        //WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).addImmediateCallback(this, refreshLayers);
 
         this.plotters.childListCallbacks.addImmediateCallback(this, handlePlottersList.bind(this));
         this.layerSettings.childListCallbacks.addImmediateCallback(this, handleSettingsList.bind(this));
@@ -2474,6 +3049,9 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginTopNumber);
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginLeftNumber);
         WeaveAPI.SessionManager.excludeLinkableChildFromSessionState(this, this.marginRightNumber);
+
+        this._frameCountSinceResize = 0;
+        // WeaveAPI.StageUtils.addEventCallback("tick", this, handleFrameConstructed.bind(this));
     }
 
     PlotManager.prototype = new weavecore.ILinkableObject();
@@ -2487,6 +3065,36 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     p.getLayerSettings = function (name) {
         return this.layerSettings.getObject(name);
     }
+
+    p.hack_onUpdateZoom = function (callback) {
+        this.hack_updateZoom_callbacks.push(callback);
+    }
+
+    function handleFrameConstructed() {
+
+        if (++this._frameCountSinceResize === 2) {
+            console.log("handleFrameConstructed", this._frameCountSinceResize);
+            this.plotters.getNames(weavetool.IPlotter).forEach(function (name) {
+                this._name_to_PlotTask_Array[name].forEach(function (plotTask) {
+                    plotTask.delayAsyncTask = false;
+                });
+            }, this);
+        }
+
+        if (this._shouldUpdateZoom) {
+            console.log("handleFrameConstructed: _shouldUpdateZoom", this._shouldUpdateZoom);
+            updateZoom.call(this, true);
+        }
+
+
+        if (this.shouldRender) {
+            console.log("handleFrameConstructed: shouldRender", this.shouldRender);
+            refreshLayers(true);
+        }
+
+    }
+
+
 
     function handleSettingsList() {
         // when settings are removed, remove plotter
@@ -2515,9 +3123,10 @@ function verifyNonNegativeNumber(value: Number): Boolean {
             // TEMPORARY SOLUTION until we start using VisToolGroup
             newPlotter.filteredKeySet.keyFilter.targetPath = ["defaultSubsetKeyFilter"];
 
-            var spatialIndex = this._name_to_SpatialIndex[newName] = WeaveAPI.SessionManager.registerDisposableChild(newPlotter, weavetool.SpatialIndex());
+            var spatialIndex = this._name_to_SpatialIndex[newName] = WeaveAPI.SessionManager.registerDisposableChild(newPlotter, new weavetool.SpatialIndex());
             var tasks = this._name_to_PlotTask_Array[newName] = [];
-				[PlotTask.TASK_TYPE_SUBSET, PlotTask.TASK_TYPE_SELECTION, PlotTask.TASK_TYPE_PROBE].forEach(function (taskType) {
+
+            [weavetool.PlotTask.TASK_TYPE_SUBSET, weavetool.PlotTask.TASK_TYPE_SELECTION, weavetool.PlotTask.TASK_TYPE_PROBE].forEach(function (taskType) {
                 var plotTask = new weavetool.PlotTask(taskType, newPlotter, spatialIndex, this.zoomBounds, settings);
                 WeaveAPI.SessionManager.registerDisposableChild(newPlotter, plotTask); // plotter is owner of task
                 WeaveAPI.SessionManager.registerLinkableChild(this, plotTask); // task affects busy status of PlotManager
@@ -2527,10 +3136,10 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
                 // when the plot task triggers callbacks, we need to render the layered visualization
                 WeaveAPI.SessionManager.getCallbackCollection(plotTask).addImmediateCallback(this, refreshLayers);
-            });
+            }, this);
             //setupBitmapFilters(newPlotter, settings, tasks[0], tasks[1], tasks[2]);
             // when spatial index is recreated, we need to update zoom
-            WeaveAPI.SessionManager.getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom);
+            //WeaveAPI.SessionManager.getCallbackCollection(spatialIndex).addImmediateCallback(this, updateZoom.bind(this));
 
             /*if (newPlotter is ITextPlotter)
             	settings.hack_useTextBitmapFilters = true;*/
@@ -2549,26 +3158,26 @@ function verifyNonNegativeNumber(value: Number): Boolean {
      * This function will update the fullDataBounds and zoomBounds based on the current state of the layers.
      */
     function updateZoom(now) {
-        /*now = (now === undefined) ? false : now;
-        if (this._lazyUpdateZoom && !now) {
+        now = (now === undefined) ? false : now;
+        /*if (this._lazyUpdateZoom && !now) {
             this._shouldUpdateZoom = true;
             return;
-        }
+        }*/
         this._lazyUpdateZoom = false;
         this._shouldUpdateZoom = false;
 
-        // make sure callbacks only trigger once
+        /*// make sure callbacks only trigger once
         WeaveAPI.SessionManager.getCallbackCollection(this).delayCallbacks();
         WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds).delayCallbacks();
         //trace('begin updateZoom',ObjectUtil.toString(getSessionState(zoomBounds)));
 
         // make sure numeric margin values are correct
-        this.marginBottomNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginBottom.value, this._unscaledHeight));
-        this.marginTopNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginTop.value, this._unscaledHeight));
-        this.marginLeftNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginLeft.value, this._unscaledWidth));
-        this.marginRightNumber.value = Math.round(NumberUtils.getNumberFromNumberOrPercent(this.marginRight.value, this._unscaledWidth));
+        this.marginBottomNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginBottom.value, this._unscaledHeight));
+        this.marginTopNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginTop.value, this._unscaledHeight));
+        this.marginLeftNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginLeft.value, this._unscaledWidth));
+        this.marginRightNumber.value = Math.round(weavedata.NumberUtils.getNumberFromNumberOrPercent(this.marginRight.value, this._unscaledWidth));
 
-        updateFullDataBounds();
+        this.updateFullDataBounds();
 
         // calculate new screen bounds in temp variable
         // default behaviour is to set screenBounds beginning from lower-left corner and ending at upper-right corner
@@ -2578,7 +3187,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         var bottom = this._unscaledHeight - this.marginBottomNumber.value;
         // set screenBounds beginning from lower-left corner and ending at upper-right corner
         //TODO: is other behavior required?
-        tempScreenBounds.setBounds(left, bottom, right, top);
+        this.tempScreenBounds.setBounds(left, bottom, right, top);
         if (left > right)
             this.tempScreenBounds.setWidth(0);
         if (top > bottom)
@@ -2625,11 +3234,13 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
         // save new bounds
         this.zoomBounds.setBounds(this.tempDataBounds, this.tempScreenBounds, this.enableFixedAspectRatio.value);
-        if (this.enableAutoZoomToSelection.value)
-            zoomToSelection();
+        if (this.enableAutoZoomToSelection.value) {
+            //zoomToSelection();
+        }
+
 
         // ----------------- hack --------------------
-        hack_updateZoom_callbacks.forEach(function (callback) {
+        this.hack_updateZoom_callbacks.forEach(function (callback) {
             callback();
         });
         // -------------------------------------------
@@ -2644,7 +3255,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
      * This function gets called by updateZoom and updates fullDataBounds.
      */
     p.updateFullDataBounds = function () {
-        /*this.tempBounds.copyFrom(this.fullDataBounds);
+        this.tempBounds.copyFrom(this.fullDataBounds);
         this.fullDataBounds.reset();
         var plotterNames = this.plotters.getNames(weavetool.IPlotter)
         for (var i = 0; i < plotterNames.length; i++) {
@@ -2659,22 +3270,98 @@ function verifyNonNegativeNumber(value: Number): Boolean {
             if (!settings.visible.value)
                 continue;
 
-            var spatialIndex = _name_to_SpatialIndex[name];
-            fullDataBounds.includeBounds(spatialIndex.collectiveBounds);
+            var spatialIndex = this._name_to_SpatialIndex[name];
+            this.fullDataBounds.includeBounds(spatialIndex.collectiveBounds);
 
             var plotter = this.plotters.getObject(name);
-            plotter.getBackgroundDataBounds(tempDataBounds);
-            fullDataBounds.includeBounds(tempDataBounds);
+            plotter.getBackgroundDataBounds(this.tempDataBounds);
+            this.fullDataBounds.includeBounds(this.tempDataBounds);
         }
         // ----------------- hack --------------------
-        if (hack_adjustFullDataBounds != null)
-            hack_adjustFullDataBounds();
+        if (this.hack_adjustFullDataBounds !== null)
+            this.hack_adjustFullDataBounds();
         // -------------------------------------------
 
         if (!this.tempBounds.equals(this.fullDataBounds)) {
             //trace('fullDataBounds changed',ObjectUtil.toString(fullDataBounds));
             WeaveAPI.SessionManager.getCallbackCollection(this).triggerCallbacks();
-        }*/
+        }
+    }
+
+    /**
+     * This function sets the data bounds for zooming, but checks them against the min and max zoom first.
+     * @param bounds The bounds that zoomBounds should be set to.
+     * @see weave.primitives.ZoomBounds#setDataBounds()
+     */
+    p.setCheckedZoomDataBounds = function (dataBounds) {
+        // instead of calling zoomBounds.setDataBounds() directly, we use setZoomLevel() because it's easier to constrain between min and max zoom.
+
+        this.zoomBounds.getScreenBounds(this.tempScreenBounds);
+        var minSize = Math.min(this.minScreenSize.value, this.tempScreenBounds.getXCoverage(), this.tempScreenBounds.getYCoverage());
+        var newZoomLevel = weavecore.StandardLib.roundSignificant(
+            weavecore.StandardLib.constrain(
+                weavetool.ZoomUtils.getZoomLevel(dataBounds, this.tempScreenBounds, this.fullDataBounds, minSize),
+                this.minZoomLevel.value,
+                this.maxZoomLevel.value
+            )
+        );
+
+        // stop if constrained zoom level doesn't change
+        if (this.getZoomLevel() === newZoomLevel)
+            return;
+
+        var cc = WeaveAPI.SessionManager.getCallbackCollection(this.zoomBounds);
+        cc.delayCallbacks();
+
+        this.setZoomLevel(newZoomLevel);
+        this.zoomBounds.getDataBounds(this.tempDataBounds);
+        if (this.tempDataBounds.isUndefined())
+            this.tempDataBounds.copyFrom(dataBounds);
+        else
+            this.tempDataBounds.setCenter(dataBounds.getXCenter(), dataBounds.getYCenter());
+        this.zoomBounds.setDataBounds(this.tempDataBounds);
+
+        // ----------------- hack --------------------
+        this.hack_updateZoom_callbacks.forEach(function (callback) {
+            callback();
+        });
+        // -------------------------------------------
+
+        cc.resumeCallbacks();
+    }
+
+
+    /**
+     * This function gets the current zoom level as defined in ZoomUtils.
+     * @return The current zoom level.
+     * @see weave.utils.ZoomUtils#getZoomLevel
+     */
+    p.getZoomLevel = function () {
+        this.zoomBounds.getDataBounds(this.tempDataBounds);
+        this.zoomBounds.getScreenBounds(this.tempScreenBounds);
+        var minSize = Math.min(this.minScreenSize.value, this.tempScreenBounds.getXCoverage(), this.tempScreenBounds.getYCoverage());
+        var zoomLevel = weavetool.ZoomUtils.getZoomLevel(this.tempDataBounds, this.tempScreenBounds, this.fullDataBounds, minSize);
+        return zoomLevel;
+    }
+
+    /**
+     * This function sets the zoom level as defined in ZoomUtils.
+     * @param newZoomLevel The new zoom level.
+     * @see weave.utils.ZoomUtils#getZoomLevel
+     */
+    p.setZoomLevel = function (newZoomLevel) {
+        newZoomLevel = weavecore.StandardLib.roundSignificant(newZoomLevel);
+        var currentZoomLevel = this.getZoomLevel();
+        var newConstrainedZoomLevel = weavecore.StandardLib.constrain(newZoomLevel, this.minZoomLevel.value, this.maxZoomLevel.value);
+        if (newConstrainedZoomLevel !== currentZoomLevel) {
+            var scale = 1 / Math.pow(2, newConstrainedZoomLevel - currentZoomLevel);
+            if (!isNaN(scale) && scale !== 0) {
+                this.zoomBounds.getDataBounds(this.tempDataBounds);
+                this.tempDataBounds.setWidth(this.tempDataBounds.getWidth() * scale);
+                this.tempDataBounds.setHeight(this.tempDataBounds.getHeight() * scale);
+                this.zoomBounds.setDataBounds(this.tempDataBounds);
+            }
+        }
     }
 
 
@@ -2923,6 +3610,80 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
         this.xToolTipEnabled;
         this.yToolTipEnabled;
+
+
+        // private const tempPoint:Point = new Point(); // reusable temp object
+
+        Object.defineProperty(this, 'tempBounds', {
+            value: new weavedata.Bounds2D()
+        });
+
+        // hacks
+        this.plotManager.hack_adjustFullDataBounds = hack_adjustFullDataBounds.bind(this);
+        this.plotManager.hack_onUpdateZoom(hack_updateZoom.bind(this));
+        WeaveAPI.SessionManager.registerLinkableChild(this.plotManager.zoomBounds, this.enableAutoZoomXToNiceNumbers);
+        WeaveAPI.SessionManager.registerLinkableChild(this.plotManager.zoomBounds, this.enableAutoZoomYToNiceNumbers);
+
+        WeaveAPI.SessionManager.getCallbackCollection(this.plotManager.zoomBounds).addGroupedCallback(this, hack_defineZoomIfUndefined.bind(this), true);
+    }
+
+    function hack_defineZoomIfUndefined() {
+        if ((this.getXAxisPlotter() || this.getYAxisPlotter()) && this.plotManager.enableAutoZoomToExtent.value) {
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            if (this.tempBounds.isUndefined()) {
+                if (this.tempBounds.getWidth() === 0)
+                    this.tempBounds.setXRange(0, 10);
+                if (this.tempBounds.getHeight() === 0)
+                    this.tempBounds.setYRange(0, 10);
+                this.plotManager.setCheckedZoomDataBounds(this.tempBounds);
+            }
+        }
+    }
+
+    function hack_adjustFullDataBounds() {
+        // adjust fullDataBounds based on auto zoom settings
+        var fullDataBounds = this.plotManager.fullDataBounds;
+        this.tempBounds.copyFrom(fullDataBounds);
+        if (this.getXAxisPlotter() && this.enableAutoZoomXToNiceNumbers.value) {
+            var xMinMax = weavecore.StandardLib.getNiceNumbersInRange(fullDataBounds.getXMin(), fullDataBounds.getXMax(), this.getXAxisPlotter().tickCountRequested.value);
+            this.tempBounds.setXRange(xMinMax[0], xMinMax[xMinMax.length - 1]); // first & last ticks
+        }
+        if (this.getYAxisPlotter() && this.enableAutoZoomYToNiceNumbers.value) {
+            var yMinMax = weavecore.StandardLib.getNiceNumbersInRange(fullDataBounds.getYMin(), fullDataBounds.getYMax(), this.getYAxisPlotter().tickCountRequested.value);
+            this.tempBounds.setYRange(yMinMax[0], yMinMax[yMinMax.length - 1]); // first & last ticks
+        }
+        // if axes are enabled, make sure width and height are not zero
+        if ((this.getXAxisPlotter() || this.getYAxisPlotter()) && this.plotManager.enableAutoZoomToExtent.value) {
+            if (this.tempBounds.getWidth() == 0)
+                this.tempBounds.setWidth(1);
+            if (this.tempBounds.getHeight() == 0)
+                this.tempBounds.setHeight(1);
+        }
+        fullDataBounds.copyFrom(this.tempBounds);
+    }
+
+    function hack_updateZoom() {
+        // when the data bounds change, we need to update the min,max values for axes
+        var xAxis = this.getXAxisPlotter();
+        if (xAxis) {
+            WeaveAPI.SessionManager.getCallbackCollection(xAxis).delayCallbacks(); // avoid recursive updateZoom() call until done setting session state
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            this.tempBounds.yMax = this.tempBounds.yMin;
+            xAxis.axisLineDataBounds.copyFrom(this.tempBounds);
+            xAxis.axisLineMinValue.value = this.tempBounds.xMin;
+            xAxis.axisLineMaxValue.value = this.tempBounds.xMax;
+            WeaveAPI.SessionManager.getCallbackCollection(xAxis).resumeCallbacks();
+        }
+        var yAxis = this.getYAxisPlotter();
+        if (yAxis) {
+            WeaveAPI.SessionManager.getCallbackCollection(yAxis).delayCallbacks(); // avoid recursive updateZoom() call until done setting session state
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            this.tempBounds.xMax = this.tempBounds.xMin;
+            yAxis.axisLineDataBounds.copyFrom(this.tempBounds);
+            yAxis.axisLineMinValue.value = this.tempBounds.yMin;
+            yAxis.axisLineMaxValue.value = this.tempBounds.yMax;
+            WeaveAPI.SessionManager.getCallbackCollection(yAxis).resumeCallbacks();
+        }
     }
 
     function linkToAxisProperties(axisName) {
@@ -3083,7 +3844,6 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleInteractiveVisualization', weavetool.SimpleInteractiveVisualization);
 
 }());
-
 (function () {
 
     /**
@@ -3576,7 +4336,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 
         //WeaveAPI.SessionManager.getCallbackCollection(this.visualization.plotManager.zoomBounds).addImmediateCallback(this, resizeUndefinedLayers, true);
 
-				[this._vis_undef_x, this._vis_undef_y, this._vis_undef_xy].forEach(function (vis) {
+        [this._vis_undef_x, this._vis_undef_y, this._vis_undef_xy].forEach(function (vis) {
             vis.initializePlotters(weavetool.ScatterPlotPlotter, false);
             vis.enableAutoZoomXToNiceNumbers.value = true;
             vis.enableAutoZoomYToNiceNumbers.value = true;
@@ -3763,11 +4523,11 @@ weave.WeavePath.prototype.requestPanel = function (type, x, y, width, height) {
 weave.WeavePath.prototype.pushPlotter = function (plotterName, plotterType, index) {
     index = (index === undefined) ? 0 : index;
     var pathArray = [];
-    if (index > 0) {
-        for (var i = 0; i <= index; i++) {
-            pathArray[i] = this._path[i]
-        }
+    // if (index > 0) {
+    for (var i = 0; i <= index; i++) {
+        pathArray[i] = this._path[i]
     }
+    // }
     var tool = this.weave.path(pathArray);
     if (!checkType(tool, 'weavetool.SimpleVisTool'))
         this._failMessage('pushPlotter', "Not a compatible visualization tool", this._path);

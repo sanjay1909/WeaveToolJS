@@ -27,7 +27,7 @@
 
 
     Object.defineProperty(SpatialIndex, 'debug', {
-        value: 'false'
+        value: false
     });
 
 
@@ -53,10 +53,15 @@
 
         this._keyToBoundsMap = new Map();
 
-        Object.defineProperty(this, '_iterateAll', {
-            value: WeaveAPI.StageUtils.generateCompoundIterativeTask(_iterate0.bind(this), _iterate1.bind(this), _iterate2.bind(this))
-        });
 
+        /**
+         * This bounds represents the full extent of the shape index.
+         */
+        Object.defineProperty(this, 'collectiveBounds', {
+            get: function () {
+                return new weavedata.Bounds2D();
+            }
+        });
         /**
          * The list of all the IQualifiedKey objects (record identifiers) referenced in this index.
          */
@@ -65,6 +70,12 @@
                 return this._keysArray;
             }
         });
+
+        Object.defineProperty(this, '_iterateAll', {
+            value: weavecore.StageUtils.generateCompoundIterativeTask(_iterate0.bind(this), _iterate1.bind(this), _iterate2.bind(this))
+        });
+
+
 
 
 
@@ -91,7 +102,7 @@
 
         // make a copy of the keys vector
         if (this._plotter)
-            weavecore.VectorUtils.copy(this._plotter.filteredKeySet.keys, this._keysArray);
+            weavedata.VectorUtils.copy(this._plotter.filteredKeySet.keys, this._keysArray);
 
         // randomize the order of the shapes to avoid a possibly poorly-performing
         // KDTree structure due to the given ordering of the records
@@ -196,9 +207,9 @@
         this._queryMissingBounds = queryMissingBounds;
         this._restarted = true;
 
-        _iterateAll.call(this, -1); // restart from first task
+        this._iterateAll.call(this, -1); // restart from first task
         // normal priority because some things can be done without having a fully populated spatial index (?)
-        WeaveAPI.StageUtils.startTask(this, _iterateAll.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, this.callbacks.triggerCallbacks, weavecore.StandardLib.replace("Creating spatial index for {0}", WeaveAPI.debugId(plotter)));
+        WeaveAPI.StageUtils.startTask(this, this._iterateAll.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, this.callbacks.triggerCallbacks.bind(this.callbacks), weavecore.StandardLib.replace("Creating spatial index for {0}", WeaveAPI.debugID(plotter)));
     }
 
 

@@ -116,7 +116,7 @@
 
         //WeaveAPI.SessionManager.getCallbackCollection(this.visualization.plotManager.zoomBounds).addImmediateCallback(this, resizeUndefinedLayers, true);
 
-				[this._vis_undef_x, this._vis_undef_y, this._vis_undef_xy].forEach(function (vis) {
+        [this._vis_undef_x, this._vis_undef_y, this._vis_undef_xy].forEach(function (vis) {
             vis.initializePlotters(weavetool.ScatterPlotPlotter, false);
             vis.enableAutoZoomXToNiceNumbers.value = true;
             vis.enableAutoZoomYToNiceNumbers.value = true;

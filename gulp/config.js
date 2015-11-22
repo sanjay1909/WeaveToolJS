@@ -8,18 +8,22 @@ var buildOrder = [
     'src/IVisTool.js',
     'src/WeaveProperties.js',
     'src/Weave.js',
+    'src/utils/SpatialIndex.js',
+     'src/utils/ZoomUtils.js',
+
     'src/plotters/IPlotter.js',
     'src/plotters/AbstractPlotter.js',
     'src/plotters/AbstractGlyphPlotter.js',
     'src/plotters/ScatterPlotPlotter.js',
     'src/plotters/SimpleAxisPlotter.js',
     'src/plotters/ProbeLinePlotter.js',
+    'src/plotters/PlotTask.js',
 
     'src/layers/styles/SolidFillStyle.js',
     'src/layers/styles/SolidLineStyle.js',
 
-    'src/utils/SpatialIndex.js',
-    'src/layers/PlotTask.js',
+
+
     'src/layers/LayerSettings.js',
     'src/layers/PlotManager.js',
     'src/layers/Visualization.js',

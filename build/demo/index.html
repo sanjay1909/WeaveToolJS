@@ -8,31 +8,52 @@
 
 <body>
     <script>
-
         var dsPath = weave.path('cereal').request('weavedata.CSVDataSource');
         var dsURLPath = weave.path(['cereal', 'url']);
+        dsURLPath.state('http://as-me.github.io/dashboard/data/testCereal.csv');
 
-        var ds = WeaveAPI.globalHashMap.getObject('cereal');
-        filteredDataX = WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn());
-        filteredDataY = WeaveAPI.SessionManager.registerDisposableChild(this, new weavedata.FilteredColumn());
 
-        getDataX = function () {
-            return filteredDataX.internalDynamicColumn;
-        }
-        getDataY = function () {
-            return filteredDataY.internalDynamicColumn;
-        }
 
-        assignXYColumnsFromSource = function () {
-            ds.putColumn(5, getDataX());
-            ds.putColumn(6, getDataY());
+
+
+        //var dataXPath = spPath.push(['children', 'visualization', 'plotManager', 'plotters', 'plot', 'dataX']);
+        //var dataYPath = spPath.push(['children', 'visualization', 'plotManager', 'plotters', 'plot', 'dataX']);
+
+        var dataYMeta = {
+            "csvColumn": "calories",
+            "keyType": "cereal",
+            "title": "calories"
         }
 
+        var dataXMeta = {
+            "csvColumn": "name",
+            "keyType": "cereal",
+            "title": "name"
+        }
 
-        weave.path('scatterplot').requestPanel('weavetool.SimpleVisTool', 50, 0, 50, 100);
+        var spPath = weave.path('ScatterPlot').requestPanel('weavetool.ScatterPlotTool', 50, 0, 50, 100);
 
-        //dsURLPath.addCallback(assignXYColumnsFromSource, false, true);
-        //dsURLPath.state('http://as-me.github.io/dashboard/data/testCereal.csv');
+        var visualizationPath = spPath.push("children", "visualization");
+        var plotterPath = spPath.pushPlotter("plot", null); //1 - as the tool is in depth level 1
+        var dataXPath = plotterPath.push("dataX");
+        var dataYPath = plotterPath.push("dataY");
+        var xAxisPath = spPath.pushPlotter("xAxis", null);
+        var yAxisPath = spPath.pushPlotter("yAxis", null);
+
+
+
+        dataXPath.setColumn(dataXMeta, 'cereal');
+        dataYPath.setColumn(dataYMeta, 'cereal');
+
+
+        var mapping = {
+            point: {
+                x: dataXPath,
+                y: dataYPath
+            }
+        }
+
+        plotterPath.retrieveRecords(mapping, plotterPath.push("filteredKeySet"));
     </script>
 
 </body>

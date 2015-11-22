@@ -26,7 +26,7 @@
     });
 
     Object.defineProperty(PlotTask, 'debug', {
-        value: 'false'
+        value: false
     });
 
     Object.defineProperty(PlotTask, 'TASK_TYPE_SUBSET', {
@@ -76,11 +76,11 @@
         this.delayAsyncTask = false;
 
         Object.defineProperty(this, '_dependencies', {
-            value: WeaveAPI.SessionManager.registerDisposableChild(this, weavecore.CallbackCollection())
+            value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavecore.CallbackCollection())
         });
 
         Object.defineProperty(this, '_asyncSort', {
-            value: WeaveAPI.SessionManager.registerDisposableChild(this, weavecore.AsyncSort())
+            value: WeaveAPI.SessionManager.registerDisposableChild(this, new weavecore.AsyncSort())
         });
 
         Object.defineProperty(this, 'taskType', {
@@ -152,7 +152,7 @@
         var keyFilter = keyFilters[this._taskType];
 
         // _dependencies is used as the parent so we can check its busy status with a single function call.
-        var list = [this._plotter, this._spatialIndex, this._zoomBounds, this._layerSettings, keyFilter];
+        var list = [this._plotter, this._spatialIndex, this._layerSettings, keyFilter];
         list.forEach(function (dependency) {
             WeaveAPI.SessionManager.registerLinkableChild(this._dependencies, dependency);
         }, this);
@@ -168,7 +168,7 @@
             if (PlotTask.debug)
                 trace(this, 'begin async rendering');
             // normal priority because rendering is not often a prerequisite for other tasks
-            WeaveAPI.StageUtils.startTask(this, asyncIterate.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, asyncComplete.bind(this), weavecore.StandardLib.replace("Plotting {0} for {1}", ['subset', 'selection', 'mouseover'][this._taskType], WeaveAPI.debugId(this._plotter)));
+            WeaveAPI.StageUtils.startTask(this, asyncIterate.bind(this), WeaveAPI.TASK_PRIORITY_NORMAL, asyncComplete.bind(this), weavecore.StandardLib.replace("Plotting {0} for {1}", ['subset', 'selection', 'mouseover'][this._taskType], WeaveAPI.debugID(this._plotter)));
 
             // assign secondary busy task in case async task gets cancelled due to busy dependencies
             WeaveAPI.SessionManager.assignBusyTask(this._dependencies, this);
@@ -194,17 +194,22 @@
             visible = false;
         } else {
             // HACK - begin validating spatial index if necessary, because this may affect zoomBounds
-            if (WeaveAPI.SessionManager.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
+            if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
                 this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);
 
             // if scale is undefined, request geometry detail because this may affect zoomBounds
             /* if (isNaN(_zoomBounds.getXScale()))
              	hack_requestGeometryDetail();*/
 
-            /* visible = _layerSettings.isZoomBoundsWithinVisibleScale(_zoomBounds);*/
+
+            // visible = this._layerSettings.isZoomBoundsWithinVisibleScale(this._zoomBounds);
+            /*if (!WeaveAPI.detectLinkableObjectChange(shouldBeRendered, this._plotter.dataX)) {
+                visible = false;
+            }*/
         }
 
         if (!visible && WeaveAPI.SessionManager.linkableObjectIsBusy(this)) {
+
             WeaveAPI.SessionManager.unassignBusyTask(this._dependencies);
 
             /*disposeObject(bufferBitmap.bitmapData);
@@ -240,9 +245,9 @@
                 // TEMPORARY SOLUTION until we start using VisToolGroup
                 this._keyFilter = this._plotter.filteredKeySet.keyFilter.getInternalKeyFilter();
                 //_keyFilter = _layerSettings.subsetFilter.getInternalKeyFilter();
-            } else if (_taskType === PlotTask.TASK_TYPE_SELECTION)
+            } else if (this._taskType === PlotTask.TASK_TYPE_SELECTION)
                 this._keyFilter = this._layerSettings.selectionFilter.getInternalKeyFilter();
-            else if (_taskType === PlotTask.TASK_TYPE_PROBE)
+            else if (this._taskType === PlotTask.TASK_TYPE_PROBE)
                 this._keyFilter = this._layerSettings.probeFilter.getInternalKeyFilter();
 
             if (PlotTask.debug)
@@ -349,16 +354,23 @@
 
         while (this._progress < 1 && getTimer() < stopTime) {
             // delay asyncInit() while calling plotter function in case it triggers callbacks
-            this._delayInit = true;
+            //this._delayInit = true;
 
-            if (PlotTask.debug)
+
+            if (this._iteration < this.recordKeys.length) {
+                this._progress = this.iteration / task.recordKeys.length;
+            } else {
+                this._progress = 1;
+            }
+
+            /*if (PlotTask.debug)
                 console.log(this, 'before iteration', this._iteration, 'recordKeys', this.recordKeys.length);
-            _progress = _plotter.drawPlotAsyncIteration(this);
+            this._progress = this._plotter.drawPlotAsyncIteration(this);
             if (PlotTask.debug)
-                console.log(this, 'after iteration', this._iteration, 'progress', this._progress, 'recordKeys', this.recordKeys.length);
+                console.log(this, 'after iteration', this._iteration, 'progress', this._progress, 'recordKeys', this.recordKeys.length);*/
 
-            this._delayInit = false;
-
+            //this._delayInit = false;
+            console.log(this, 'after iteration', this._iteration, 'progress', this._progress, 'recordKeys', this.recordKeys.length);
             if (this._pendingInit) {
                 // if we get here it means the plotter draw function triggered callbacks
                 // and we need to restart the async task.
@@ -401,7 +413,14 @@
     PlotTask.prototype.constructor = PlotTask;
     var p = PlotTask.prototype;
 
-
+    p.dispose = function () {
+        _plotter = null;
+        _spatialIndex = null;
+        _zoomBounds = null;
+        _layerSettings = null;
+        //WeaveAPI.SessionManager.disposeObject(completedBitmap.bitmapData);
+        //WeaveAPI.SessionManager.disposeObject(bufferBitmap.bitmapData);
+    }
 
 
     if (typeof exports !== 'undefined') {

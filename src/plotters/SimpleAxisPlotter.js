@@ -125,10 +125,18 @@
             },
             '_columnWatcher': {
                 value: WeaveAPI.SessionManager.registerLinkableChild(this, new weavecore.LinkableWatcher())
+            },
+            '_keySet': {
+                value: this.newSpatialProperty(weavedata.KeySet)
             }
+
+
+
         });
 
         this._labelFunction = null;
+
+        this.setSingleKeySource(this._keySet);
 
     }
 

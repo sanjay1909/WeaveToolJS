@@ -88,7 +88,13 @@
     var p = LayerSettings.prototype;
 
 
-
+    p.isZoomBoundsWithinVisibleScale = function (zoomBounds) {
+        var min = weavecore.StandardLib.roundSignificant(this.minVisibleScale.value);
+        var max = weavecore.StandardLib.roundSignificant(this.maxVisibleScale.value);
+        var xScale = weavecore.StandardLib.roundSignificant(zoomBounds.getXScale());
+        var yScale = weavecore.StandardLib.roundSignificant(zoomBounds.getYScale());
+        return min <= xScale && xScale <= max && min <= yScale && yScale <= max;
+    }
 
     if (typeof exports !== 'undefined') {
         module.exports = LayerSettings;

@@ -93,6 +93,80 @@
 
         this.xToolTipEnabled;
         this.yToolTipEnabled;
+
+
+        // private const tempPoint:Point = new Point(); // reusable temp object
+
+        Object.defineProperty(this, 'tempBounds', {
+            value: new weavedata.Bounds2D()
+        });
+
+        // hacks
+        this.plotManager.hack_adjustFullDataBounds = hack_adjustFullDataBounds.bind(this);
+        this.plotManager.hack_onUpdateZoom(hack_updateZoom.bind(this));
+        WeaveAPI.SessionManager.registerLinkableChild(this.plotManager.zoomBounds, this.enableAutoZoomXToNiceNumbers);
+        WeaveAPI.SessionManager.registerLinkableChild(this.plotManager.zoomBounds, this.enableAutoZoomYToNiceNumbers);
+
+        WeaveAPI.SessionManager.getCallbackCollection(this.plotManager.zoomBounds).addGroupedCallback(this, hack_defineZoomIfUndefined.bind(this), true);
+    }
+
+    function hack_defineZoomIfUndefined() {
+        if ((this.getXAxisPlotter() || this.getYAxisPlotter()) && this.plotManager.enableAutoZoomToExtent.value) {
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            if (this.tempBounds.isUndefined()) {
+                if (this.tempBounds.getWidth() === 0)
+                    this.tempBounds.setXRange(0, 10);
+                if (this.tempBounds.getHeight() === 0)
+                    this.tempBounds.setYRange(0, 10);
+                this.plotManager.setCheckedZoomDataBounds(this.tempBounds);
+            }
+        }
+    }
+
+    function hack_adjustFullDataBounds() {
+        // adjust fullDataBounds based on auto zoom settings
+        var fullDataBounds = this.plotManager.fullDataBounds;
+        this.tempBounds.copyFrom(fullDataBounds);
+        if (this.getXAxisPlotter() && this.enableAutoZoomXToNiceNumbers.value) {
+            var xMinMax = weavecore.StandardLib.getNiceNumbersInRange(fullDataBounds.getXMin(), fullDataBounds.getXMax(), this.getXAxisPlotter().tickCountRequested.value);
+            this.tempBounds.setXRange(xMinMax[0], xMinMax[xMinMax.length - 1]); // first & last ticks
+        }
+        if (this.getYAxisPlotter() && this.enableAutoZoomYToNiceNumbers.value) {
+            var yMinMax = weavecore.StandardLib.getNiceNumbersInRange(fullDataBounds.getYMin(), fullDataBounds.getYMax(), this.getYAxisPlotter().tickCountRequested.value);
+            this.tempBounds.setYRange(yMinMax[0], yMinMax[yMinMax.length - 1]); // first & last ticks
+        }
+        // if axes are enabled, make sure width and height are not zero
+        if ((this.getXAxisPlotter() || this.getYAxisPlotter()) && this.plotManager.enableAutoZoomToExtent.value) {
+            if (this.tempBounds.getWidth() == 0)
+                this.tempBounds.setWidth(1);
+            if (this.tempBounds.getHeight() == 0)
+                this.tempBounds.setHeight(1);
+        }
+        fullDataBounds.copyFrom(this.tempBounds);
+    }
+
+    function hack_updateZoom() {
+        // when the data bounds change, we need to update the min,max values for axes
+        var xAxis = this.getXAxisPlotter();
+        if (xAxis) {
+            WeaveAPI.SessionManager.getCallbackCollection(xAxis).delayCallbacks(); // avoid recursive updateZoom() call until done setting session state
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            this.tempBounds.yMax = this.tempBounds.yMin;
+            xAxis.axisLineDataBounds.copyFrom(this.tempBounds);
+            xAxis.axisLineMinValue.value = this.tempBounds.xMin;
+            xAxis.axisLineMaxValue.value = this.tempBounds.xMax;
+            WeaveAPI.SessionManager.getCallbackCollection(xAxis).resumeCallbacks();
+        }
+        var yAxis = this.getYAxisPlotter();
+        if (yAxis) {
+            WeaveAPI.SessionManager.getCallbackCollection(yAxis).delayCallbacks(); // avoid recursive updateZoom() call until done setting session state
+            this.plotManager.zoomBounds.getDataBounds(this.tempBounds);
+            this.tempBounds.xMax = this.tempBounds.xMin;
+            yAxis.axisLineDataBounds.copyFrom(this.tempBounds);
+            yAxis.axisLineMinValue.value = this.tempBounds.yMin;
+            yAxis.axisLineMaxValue.value = this.tempBounds.yMax;
+            WeaveAPI.SessionManager.getCallbackCollection(yAxis).resumeCallbacks();
+        }
     }
 
     function linkToAxisProperties(axisName) {
