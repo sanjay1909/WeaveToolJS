@@ -194,8 +194,8 @@
             visible = false;
         } else {
             // HACK - begin validating spatial index if necessary, because this may affect zoomBounds
-            if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
-                this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);
+            /*if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
+                this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);*/
 
             // if scale is undefined, request geometry detail because this may affect zoomBounds
             /* if (isNaN(_zoomBounds.getXScale()))
@@ -236,7 +236,7 @@
         this._progress = 0;
         this._iteration = 0;
         this._iPendingKey = 0;
-        if (shouldRender) {
+        if (true) {
             this._pendingKeys = this._plotter.filteredKeySet.keys;
             this._recordKeys = [];
             /*_zoomBounds.getDataBounds(_dataBounds);

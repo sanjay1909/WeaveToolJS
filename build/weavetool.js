@@ -1340,6 +1340,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SpatialIndex', weavetool.SpatialIndex);
 
 }());
+
 (function () {
 
     /**
@@ -1431,6 +1432,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.ZoomUtils', weavetool.ZoomUtils);
 
 }());
+
 (function () {
 
     /**
@@ -1771,6 +1773,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.AbstractGlyphPlotter', weavetool.AbstractGlyphPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -2098,6 +2101,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleAxisPlotter', weavetool.SimpleAxisPlotter);
 
 }());
+
 (function () {
 
     /**
@@ -2355,8 +2359,8 @@ function verifyNonNegativeNumber(value: Number): Boolean {
             visible = false;
         } else {
             // HACK - begin validating spatial index if necessary, because this may affect zoomBounds
-            if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
-                this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);
+            /*if (WeaveAPI.detectLinkableObjectChange(this._spatialIndex.createIndex, this._plotter.spatialCallbacks))
+                this._spatialIndex.createIndex(this._plotter, this._layerSettings.hack_includeMissingRecordBounds);*/
 
             // if scale is undefined, request geometry detail because this may affect zoomBounds
             /* if (isNaN(_zoomBounds.getXScale()))
@@ -2397,7 +2401,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
         this._progress = 0;
         this._iteration = 0;
         this._iPendingKey = 0;
-        if (shouldRender) {
+        if (true) {
             this._pendingKeys = this._plotter.filteredKeySet.keys;
             this._recordKeys = [];
             /*_zoomBounds.getDataBounds(_dataBounds);
@@ -2886,6 +2890,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
 	return min <= xScale && xScale <= max
 		&& min <= yScale && yScale <= max;
 }*/
+
 (function () {
 
     /**
@@ -3377,6 +3382,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.PlotManager', weavetool.PlotManager);
 
 }());
+
 (function () {
 
     /**
@@ -3844,6 +3850,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.SimpleInteractiveVisualization', weavetool.SimpleInteractiveVisualization);
 
 }());
+
 (function () {
 
     /**
@@ -4458,6 +4465,7 @@ function verifyNonNegativeNumber(value: Number): Boolean {
     weavecore.ClassUtils.registerClass('weavetool.ScatterPlotTool', weavetool.ScatterPlotTool);
 
 }());
+
 /* ***** BEGIN LICENSE BLOCK *****
  *
  * This file is part of Weave.
